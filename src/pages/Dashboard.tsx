@@ -10,6 +10,7 @@ import { useUserEnrollments, useEnrollInCourse } from "@/hooks/useCourses";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { 
   Calendar,
   Bell,
@@ -43,6 +44,7 @@ const Dashboard = () => {
   const enrollInCourse = useEnrollInCourse();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Redirect if not authenticated
   if (!loading && !user) {
@@ -75,6 +77,12 @@ const Dashboard = () => {
 
   const handleStartCourse = async (enrollmentId: string) => {
     try {
+      // Find the enrollment to get the course_id
+      const enrollment = enrollments?.find(e => e.id === enrollmentId);
+      if (!enrollment) {
+        throw new Error('Enrollment not found');
+      }
+
       const { error } = await supabase
         .from('enrollments')
         .update({ 
@@ -92,6 +100,9 @@ const Dashboard = () => {
         title: "Course started",
         description: "You can now begin your training."
       });
+
+      // Navigate to the course page
+      navigate(`/course/${enrollment.course_id}`);
     } catch (error: any) {
       toast({
         title: "Failed to start course",
@@ -173,7 +184,13 @@ const Dashboard = () => {
                     status={mapEnrollmentStatus(enrollment.status)}
                     isEnrolled={true}
                     userRole={validUserRole}
-                    onContinue={() => handleStartCourse(enrollment.id)}
+                    onContinue={() => {
+                      if (enrollment.status === 'not_started') {
+                        handleStartCourse(enrollment.id);
+                      } else {
+                        navigate(`/course/${enrollment.course_id}`);
+                      }
+                    }}
                     onEnroll={() => handleEnroll(enrollment.course_id)}
                   />
                 ))
