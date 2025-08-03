@@ -1,4 +1,4 @@
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import { Header } from "@/components/Layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 
 const Course = () => {
   const { courseId } = useParams<{ courseId: string }>();
+  const navigate = useNavigate();
   const { user, userRole, profile, loading: authLoading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
 
@@ -188,7 +189,10 @@ const Course = () => {
                         Completed
                       </Button>
                     ) : index === 0 || modules[index - 1]?.completed ? (
-                      <Button variant="default">
+                      <Button 
+                        variant="default"
+                        onClick={() => navigate(`/course/${courseId}/module/${module.id}`)}
+                      >
                         <Play className="mr-2 h-4 w-4" />
                         {index === 0 ? 'Start Module' : 'Continue Module'}
                       </Button>
