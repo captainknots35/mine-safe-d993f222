@@ -11,9 +11,18 @@ import {
   BookOpen,
   Award
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Link, Navigate } from "react-router-dom";
 import heroImage from "@/assets/mining-hero.jpg";
 
 const Index = () => {
+  const { user } = useAuth();
+
+  // Redirect authenticated users to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -27,8 +36,12 @@ const Index = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="ghost">Sign In</Button>
-            <Button variant="safety">Get Started</Button>
+            <Button variant="ghost" asChild>
+              <Link to="/auth">Sign In</Link>
+            </Button>
+            <Button variant="safety" asChild>
+              <Link to="/auth">Get Started</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -53,8 +66,8 @@ const Index = () => {
             comprehensive, compliant digital platform featuring live instruction and verified certification.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="xl" variant="safety" className="text-lg">
-              Start Training <ArrowRight className="ml-2 h-5 w-5" />
+            <Button size="xl" variant="safety" className="text-lg" asChild>
+              <Link to="/auth">Start Training <ArrowRight className="ml-2 h-5 w-5" /></Link>
             </Button>
             <Button size="xl" variant="secondary" className="text-lg bg-white/20 hover:bg-white/30 text-white border-white/20">
               Learn More
@@ -159,8 +172,8 @@ const Index = () => {
             Join thousands of miners who have completed their MSHA training 
             requirements through our platform.
           </p>
-          <Button size="xl" variant="safety" className="text-lg">
-            Access Training Platform <ArrowRight className="ml-2 h-5 w-5" />
+          <Button size="xl" variant="safety" className="text-lg" asChild>
+            <Link to="/auth">Access Training Platform <ArrowRight className="ml-2 h-5 w-5" /></Link>
           </Button>
         </div>
       </section>

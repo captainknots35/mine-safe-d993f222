@@ -1,47 +1,22 @@
+import { Navigate } from "react-router-dom";
 import { Header } from "@/components/Layout/Header";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { CourseCard } from "@/components/Courses/CourseCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/useAuth";
+import { useUserEnrollments, useEnrollInCourse } from "@/hooks/useCourses";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Calendar,
   Bell,
   Users,
   Clock,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from "lucide-react";
-
-// Mock data - in real app this would come from database
-const mockCourses = [
-  {
-    id: '1',
-    title: 'MSHA Part 46 New Miner Training',
-    description: 'Comprehensive 24-hour training program for new miners working at surface operations. Covers safety fundamentals, hazard recognition, and emergency procedures.',
-    type: 'Part 46' as const,
-    duration: 24,
-    status: 'in-progress' as const,
-    progress: 65
-  },
-  {
-    id: '2',
-    title: 'MSHA Part 48 Annual Refresher',
-    description: '8-hour annual refresher training to maintain compliance and reinforce safety principles for underground and surface operations.',
-    type: 'Part 48' as const,
-    duration: 8,
-    status: 'available' as const
-  },
-  {
-    id: '3',
-    title: 'Electrical Safety & Lockout/Tagout',
-    description: 'Specialized training focusing on electrical hazards in mining operations and proper lockout/tagout procedures.',
-    type: 'Part 46' as const,
-    duration: 4,
-    status: 'completed' as const,
-    progress: 100
-  }
-];
 
 const upcomingEvents = [
   {
@@ -61,17 +36,66 @@ const upcomingEvents = [
 ];
 
 const Dashboard = () => {
-  const userRole = 'miner'; // This would come from authentication context
+  const { user, userRole, profile, loading } = useAuth();
+  const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
+  const enrollInCourse = useEnrollInCourse();
+  const { toast } = useToast();
+
+  // Redirect if not authenticated
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (loading || enrollmentsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  const handleEnroll = async (courseId: string) => {
+    try {
+      await enrollInCourse(courseId);
+      toast({
+        title: "Enrolled successfully",
+        description: "You have been enrolled in the course."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Enrollment failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const userName = profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User';
+  const validUserRole = (userRole as 'admin' | 'instructor' | 'miner') || 'miner';
+
+  // Helper function to convert enrollment status to CourseCard status
+  const mapEnrollmentStatus = (enrollmentStatus: 'not_started' | 'in_progress' | 'completed') => {
+    switch (enrollmentStatus) {
+      case 'not_started':
+        return 'available' as const;
+      case 'in_progress':
+        return 'in-progress' as const;
+      case 'completed':
+        return 'completed' as const;
+      default:
+        return 'available' as const;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      <Header userRole={userRole} userName="John Doe" />
+      <Header userRole={validUserRole} userName={userName} />
       
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Welcome back, John!</h1>
+            <h1 className="text-3xl font-bold text-foreground">Welcome back, {profile?.first_name || 'there'}!</h1>
             <p className="text-muted-foreground mt-1">
               Stay compliant with your MSHA training requirements
             </p>
@@ -85,7 +109,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Overview */}
-        <DashboardStats userRole={userRole} />
+        <DashboardStats userRole={validUserRole} />
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-8">
@@ -99,15 +123,27 @@ const Dashboard = () => {
             </div>
             
             <div className="grid gap-6">
-              {mockCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  {...course}
-                  userRole={userRole}
-                  onEnroll={() => console.log('Enroll in course:', course.id)}
-                  onContinue={() => console.log('Continue course:', course.id)}
-                />
-              ))}
+              {enrollments?.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground mb-4">No courses enrolled yet.</p>
+                  <Button variant="outline">Browse Available Courses</Button>
+                </Card>
+              ) : (
+                enrollments?.map((enrollment) => (
+                  <CourseCard
+                    key={enrollment.id}
+                    id={enrollment.course_id}
+                    title={enrollment.course?.title || 'Course'}
+                    description={enrollment.course?.description || ''}
+                    type={enrollment.course?.type || 'Part 46'}
+                    duration={enrollment.course?.duration_hours || 0}
+                    status={mapEnrollmentStatus(enrollment.status)}
+                    userRole={validUserRole}
+                    onEnroll={() => handleEnroll(enrollment.course_id)}
+                    onContinue={() => console.log('Continue course:', enrollment.id)}
+                  />
+                ))
+              )}
             </div>
           </div>
 
