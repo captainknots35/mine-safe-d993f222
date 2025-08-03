@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   ShieldCheck, 
   User, 
@@ -20,39 +22,45 @@ interface HeaderProps {
 }
 
 export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProps) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo and Brand */}
-        <div className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <ShieldCheck className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
             <span className="font-bold text-lg text-primary">MineSafe Learn</span>
             <span className="text-xs text-muted-foreground">MSHA Training Platform</span>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation - Desktop */}
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
             Dashboard
-          </a>
-          <a href="/courses" className="text-sm font-medium hover:text-primary transition-colors">
+          </Link>
+          <Link to="/courses" className="text-sm font-medium hover:text-primary transition-colors">
             Courses
-          </a>
+          </Link>
           {userRole === 'admin' && (
-            <a href="/admin" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
               Administration
-            </a>
+            </Link>
           )}
           {userRole === 'instructor' && (
-            <a href="/instructor" className="text-sm font-medium hover:text-primary transition-colors">
+            <Link to="/instructor" className="text-sm font-medium hover:text-primary transition-colors">
               My Classes
-            </a>
+            </Link>
           )}
-          <a href="/certificates" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link to="/certificates" className="text-sm font-medium hover:text-primary transition-colors">
             Certificates
-          </a>
+          </Link>
         </nav>
 
         {/* User Menu */}
@@ -74,7 +82,7 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
+              <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>

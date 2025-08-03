@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Header } from "@/components/Layout/Header";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { CourseCard } from "@/components/Courses/CourseCard";
@@ -126,7 +126,9 @@ const Dashboard = () => {
               {enrollments?.length === 0 ? (
                 <Card className="p-8 text-center">
                   <p className="text-muted-foreground mb-4">No courses enrolled yet.</p>
-                  <Button variant="outline">Browse Available Courses</Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/courses">Browse Available Courses</Link>
+                  </Button>
                 </Card>
               ) : (
                 enrollments?.map((enrollment) => (
