@@ -171,6 +171,7 @@ const Dashboard = () => {
                     type={enrollment.course?.type || 'Part 46'}
                     duration={enrollment.course?.duration_hours || 0}
                     status={mapEnrollmentStatus(enrollment.status)}
+                    isEnrolled={true}
                     userRole={validUserRole}
                     onContinue={() => handleStartCourse(enrollment.id)}
                     onEnroll={() => handleEnroll(enrollment.course_id)}

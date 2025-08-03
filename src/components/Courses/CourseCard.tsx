@@ -20,6 +20,7 @@ interface CourseCardProps {
   progress?: number; // 0-100 for enrolled users
   status: 'available' | 'in-progress' | 'completed';
   userRole: 'admin' | 'instructor' | 'miner';
+  isEnrolled?: boolean; // Add this to distinguish between available for enrollment vs enrolled but not started
   onEnroll?: () => void;
   onContinue?: () => void;
   onManage?: () => void;
@@ -35,6 +36,7 @@ export const CourseCard = ({
   progress,
   status,
   userRole,
+  isEnrolled = false,
   onEnroll,
   onContinue,
   onManage
@@ -87,8 +89,14 @@ export const CourseCard = ({
           </Button>
         );
       default:
+        // If user is enrolled but hasn't started, show "Start Training" with onContinue
+        // If user is not enrolled, show "Start Training" with onEnroll
         return (
-          <Button variant="safety" onClick={onEnroll} className="w-full">
+          <Button 
+            variant="safety" 
+            onClick={isEnrolled ? onContinue : onEnroll} 
+            className="w-full"
+          >
             <Play className="mr-2 h-4 w-4" />
             Start Training
           </Button>
