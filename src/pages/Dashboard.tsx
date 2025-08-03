@@ -141,8 +141,11 @@ const Dashboard = () => {
                     duration={enrollment.course?.duration_hours || 0}
                     status={mapEnrollmentStatus(enrollment.status)}
                     userRole={validUserRole}
-                    onEnroll={() => handleEnroll(enrollment.course_id)}
-                    onContinue={() => console.log('Continue course:', enrollment.id)}
+                    onContinue={() => {
+                      // Handle starting/continuing course
+                      console.log('Starting/continuing course:', enrollment.id);
+                      // TODO: Navigate to course content or update enrollment status
+                    }}
                   />
                 ))
               )}
