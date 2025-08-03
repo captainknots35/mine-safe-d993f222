@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userData?: any) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/dashboard`;
     
     const { error } = await supabase.auth.signUp({
       email,
@@ -103,10 +103,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive"
       });
     } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to complete your registration."
-      });
+      // Send custom confirmation email
+      try {
+        await supabase.functions.invoke('send-auth-email', {
+          body: {
+            email,
+            email_action_type: 'signup',
+            redirect_to: redirectUrl,
+            site_url: window.location.origin
+          }
+        });
+        
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link to complete your registration."
+        });
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        toast({
+          title: "Account created",
+          description: "Please check your email for confirmation instructions."
+        });
+      }
     }
     
     return { error };
