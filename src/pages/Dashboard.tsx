@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserEnrollments, useEnrollInCourse } from "@/hooks/useCourses";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { 
   Calendar,
   Bell,
@@ -40,6 +42,7 @@ const Dashboard = () => {
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
   const enrollInCourse = useEnrollInCourse();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Redirect if not authenticated
   if (!loading && !user) {
@@ -64,6 +67,34 @@ const Dashboard = () => {
     } catch (error: any) {
       toast({
         title: "Enrollment failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleStartCourse = async (enrollmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('enrollments')
+        .update({ 
+          status: 'in_progress',
+          started_at: new Date().toISOString()
+        })
+        .eq('id', enrollmentId);
+
+      if (error) throw error;
+
+      // Refresh enrollments data
+      queryClient.invalidateQueries({ queryKey: ['enrollments', user?.id] });
+
+      toast({
+        title: "Course started",
+        description: "You can now begin your training."
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to start course",
         description: error.message,
         variant: "destructive"
       });
@@ -141,11 +172,8 @@ const Dashboard = () => {
                     duration={enrollment.course?.duration_hours || 0}
                     status={mapEnrollmentStatus(enrollment.status)}
                     userRole={validUserRole}
-                    onContinue={() => {
-                      // Handle starting/continuing course
-                      console.log('Starting/continuing course:', enrollment.id);
-                      // TODO: Navigate to course content or update enrollment status
-                    }}
+                    onContinue={() => handleStartCourse(enrollment.id)}
+                    onEnroll={() => handleEnroll(enrollment.course_id)}
                   />
                 ))
               )}
