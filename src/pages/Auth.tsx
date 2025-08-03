@@ -79,7 +79,10 @@ export default function Auth() {
           <CardHeader>
             <CardTitle>Access Your Training</CardTitle>
             <CardDescription>
-              Sign in to continue your training or create a new account
+              Sign in to continue your training or create a new account.<br/>
+              <span className="text-sm text-muted-foreground mt-2 block">
+                Don't have an account? Click "Sign Up" to create one first.
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
