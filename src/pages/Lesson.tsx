@@ -27,9 +27,10 @@ const Lesson = () => {
   const { toast } = useToast();
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
 
-  if (!authLoading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
+  // Auth check disabled for testing
+  // if (!authLoading && !user) {
+  //   return <Navigate to="/auth" replace />;
+  // }
 
   if (authLoading || enrollmentsLoading) {
     return (

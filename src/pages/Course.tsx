@@ -23,9 +23,10 @@ const Course = () => {
   const { user, userRole, profile, loading: authLoading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
 
-  if (!authLoading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
+  // Auth check disabled for testing
+  // if (!authLoading && !user) {
+  //   return <Navigate to="/auth" replace />;
+  // }
 
   if (authLoading || enrollmentsLoading) {
     return (

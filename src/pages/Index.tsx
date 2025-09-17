@@ -39,6 +39,9 @@ const Index = () => {
             <Button variant="ghost" asChild>
               <Link to="/auth">Sign In</Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">Test Dashboard</Link>
+            </Button>
             <Button variant="safety" asChild>
               <Link to="/auth">Get Started</Link>
             </Button>
