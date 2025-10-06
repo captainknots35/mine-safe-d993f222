@@ -18,6 +18,10 @@ import {
 } from "lucide-react";
 
 const Course = () => {
+  // ⚠️ TEMPORARY: Set to true to unlock all modules for editing
+  // TODO: Change back to false to re-enable sequential locking
+  const TEMP_UNLOCK_ALL_MODULES = true;
+  
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { user, userRole, profile, loading: authLoading } = useAuth();
@@ -140,13 +144,13 @@ const Course = () => {
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Completed
                         </Button>
-                      ) : index === 0 ? (
+                      ) : (TEMP_UNLOCK_ALL_MODULES || index === 0) ? (
                         <Button 
                           variant="default"
                           onClick={() => navigate(`/course/${courseId}/module/${module.id}`)}
                         >
                           <Play className="mr-2 h-4 w-4" />
-                          Start Module
+                          {index === 0 ? 'Start Module' : 'Continue Module'}
                         </Button>
                       ) : (
                         <Button variant="outline" disabled>
