@@ -69,8 +69,24 @@ const Lesson = () => {
   }
   
   if (moduleLessons.length === 0) {
-    console.log('No lessons found for module, redirecting...');
-    return <Navigate to={`/course/${courseId}`} replace />;
+    console.log('No lessons found for module, showing placeholder...');
+    return (
+      <div className="min-h-screen bg-background">
+        <Header userRole={validUserRole} userName={userName} />
+        <main className="container mx-auto px-4 py-8">
+          <Button variant="ghost" className="mb-4" onClick={() => navigate(`/course/${courseId}`)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Course
+          </Button>
+          <Card className="bg-warning/5 border-warning/20">
+            <CardContent className="p-6">
+              <h2 className="text-xl font-semibold mb-2">Module content not available</h2>
+              <p className="text-muted-foreground">This module doesn’t have lessons yet. Please try again shortly.</p>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
   }
 
   const currentLesson = moduleLessons[currentLessonIndex];
