@@ -55,7 +55,21 @@ const Lesson = () => {
   const currentModule = modules?.find(m => m.id === moduleId);
   const moduleLessons = lessons || [];
   
-  if (!currentModule || moduleLessons.length === 0) {
+  console.log('Lesson Page Debug:', {
+    moduleId,
+    currentModule,
+    modulesCount: modules?.length,
+    lessonsCount: moduleLessons.length,
+    allModules: modules?.map(m => ({ id: m.id, title: m.title }))
+  });
+  
+  if (!currentModule) {
+    console.log('Module not found, redirecting...');
+    return <Navigate to={`/course/${courseId}`} replace />;
+  }
+  
+  if (moduleLessons.length === 0) {
+    console.log('No lessons found for module, redirecting...');
     return <Navigate to={`/course/${courseId}`} replace />;
   }
 
