@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserEnrollments, useCourseModules, useModuleLessons } from "@/hooks/useCourses";
 import { useToast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { 
   ArrowLeft,
   ArrowRight,
@@ -16,7 +18,9 @@ import {
   FileText,
   Video,
   Loader2,
-  BookOpen
+  BookOpen,
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 
 const Lesson = () => {
@@ -28,6 +32,9 @@ const Lesson = () => {
   const { data: lessons, isLoading: lessonsLoading } = useModuleLessons(moduleId);
   const { toast } = useToast();
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
 
   // Auth check disabled for testing
   // if (!authLoading && !user) {
@@ -97,6 +104,10 @@ const Lesson = () => {
   const handleNextLesson = () => {
     if (currentLessonIndex < totalLessons - 1) {
       setCurrentLessonIndex(currentLessonIndex + 1);
+      // Reset quiz state when moving to next lesson
+      setQuizAnswers({});
+      setQuizSubmitted(false);
+      setQuizScore(0);
     } else {
       // Module completed
       toast({
@@ -110,7 +121,54 @@ const Lesson = () => {
   const handlePreviousLesson = () => {
     if (currentLessonIndex > 0) {
       setCurrentLessonIndex(currentLessonIndex - 1);
+      // Reset quiz state when moving to previous lesson
+      setQuizAnswers({});
+      setQuizSubmitted(false);
+      setQuizScore(0);
     }
+  };
+
+  const handleQuizAnswer = (questionId: number, answerIndex: number) => {
+    setQuizAnswers(prev => ({
+      ...prev,
+      [questionId]: answerIndex
+    }));
+  };
+
+  const handleQuizSubmit = () => {
+    const questions = currentLesson.content_data?.questions || [];
+    let correct = 0;
+    
+    questions.forEach((q: any) => {
+      if (quizAnswers[q.id] === q.correctAnswer) {
+        correct++;
+      }
+    });
+    
+    const score = Math.round((correct / questions.length) * 100);
+    setQuizScore(score);
+    setQuizSubmitted(true);
+
+    const passingScore = currentLesson.content_data?.passingScore || 80;
+    
+    if (score >= passingScore) {
+      toast({
+        title: "Assessment Passed!",
+        description: `Congratulations! You scored ${score}%. You may now continue.`,
+      });
+    } else {
+      toast({
+        title: "Assessment Not Passed",
+        description: `You scored ${score}%. You need ${passingScore}% to pass. Please review the material and try again.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleQuizRetry = () => {
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(0);
   };
 
   const getLessonIcon = (type: string) => {
@@ -147,16 +205,139 @@ const Lesson = () => {
           </div>
         );
       case 'quiz':
+        const questions = currentLesson.content_data?.questions || [];
+        const instructions = currentLesson.content_data?.instructions || '';
+        const passingScore = currentLesson.content_data?.passingScore || 80;
+        const allQuestionsAnswered = questions.length > 0 && questions.every((q: any) => quizAnswers[q.id] !== undefined);
+
         return (
           <div className="space-y-6">
-            <div className="bg-warning/10 border border-warning/20 rounded-lg p-6 text-center">
-              <CheckCircle className="h-16 w-16 mx-auto mb-4 text-warning" />
-              <h3 className="text-xl font-semibold mb-2">Assessment Time</h3>
-              <p className="text-muted-foreground">{contentText}</p>
-              <Button className="mt-4" variant="default">
-                Start Assessment
-              </Button>
+            {/* Instructions */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-6 w-6 text-primary mt-1 flex-shrink-0" />
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Assessment Instructions</h3>
+                  <p className="text-muted-foreground">{instructions}</p>
+                </div>
+              </div>
             </div>
+
+            {/* Questions */}
+            {!quizSubmitted ? (
+              <div className="space-y-8">
+                {questions.map((question: any, qIndex: number) => (
+                  <Card key={question.id} className="border-2">
+                    <CardHeader>
+                      <CardTitle className="text-lg">
+                        Question {qIndex + 1} of {questions.length}
+                      </CardTitle>
+                      <p className="text-base font-normal mt-2">{question.question}</p>
+                    </CardHeader>
+                    <CardContent>
+                      <RadioGroup
+                        value={quizAnswers[question.id]?.toString()}
+                        onValueChange={(value) => handleQuizAnswer(question.id, parseInt(value))}
+                      >
+                        {question.options.map((option: string, optIndex: number) => (
+                          <div key={optIndex} className="flex items-start space-x-3 space-y-0 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                            <RadioGroupItem value={optIndex.toString()} id={`q${question.id}-opt${optIndex}`} />
+                            <Label 
+                              htmlFor={`q${question.id}-opt${optIndex}`}
+                              className="font-normal cursor-pointer flex-1 leading-relaxed"
+                            >
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                <div className="flex justify-center pt-4">
+                  <Button 
+                    size="lg"
+                    onClick={handleQuizSubmit}
+                    disabled={!allQuestionsAnswered}
+                  >
+                    Submit Assessment
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Results */
+              <div className="space-y-6">
+                <Card className={`border-2 ${quizScore >= passingScore ? 'border-success bg-success/5' : 'border-destructive bg-destructive/5'}`}>
+                  <CardContent className="p-8 text-center">
+                    {quizScore >= passingScore ? (
+                      <>
+                        <CheckCircle className="h-20 w-20 mx-auto mb-4 text-success" />
+                        <h3 className="text-2xl font-bold mb-2 text-success">Assessment Passed!</h3>
+                        <p className="text-xl mb-4">Your Score: {quizScore}%</p>
+                        <p className="text-muted-foreground">
+                          Congratulations! You've successfully completed this assessment.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-20 w-20 mx-auto mb-4 text-destructive" />
+                        <h3 className="text-2xl font-bold mb-2 text-destructive">Assessment Not Passed</h3>
+                        <p className="text-xl mb-4">Your Score: {quizScore}%</p>
+                        <p className="text-muted-foreground mb-4">
+                          You need {passingScore}% to pass. Please review the material and try again.
+                        </p>
+                        <Button onClick={handleQuizRetry} variant="outline">
+                          Retry Assessment
+                        </Button>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Answer Review */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold">Answer Review</h3>
+                  {questions.map((question: any, qIndex: number) => {
+                    const userAnswer = quizAnswers[question.id];
+                    const isCorrect = userAnswer === question.correctAnswer;
+                    
+                    return (
+                      <Card key={question.id} className={`border-2 ${isCorrect ? 'border-success/30' : 'border-destructive/30'}`}>
+                        <CardHeader>
+                          <div className="flex items-start justify-between gap-4">
+                            <CardTitle className="text-base font-semibold">
+                              Question {qIndex + 1}: {question.question}
+                            </CardTitle>
+                            {isCorrect ? (
+                              <CheckCircle className="h-5 w-5 text-success flex-shrink-0" />
+                            ) : (
+                              <XCircle className="h-5 w-5 text-destructive flex-shrink-0" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div>
+                            <span className="font-medium">Your answer: </span>
+                            <span className={isCorrect ? 'text-success' : 'text-destructive'}>
+                              {question.options[userAnswer]}
+                            </span>
+                          </div>
+                          {!isCorrect && (
+                            <div>
+                              <span className="font-medium">Correct answer: </span>
+                              <span className="text-success">
+                                {question.options[question.correctAnswer]}
+                              </span>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         );
       default:
@@ -262,7 +443,10 @@ const Lesson = () => {
             Lesson {currentLessonIndex + 1} of {totalLessons}
           </div>
           
-          <Button onClick={handleNextLesson}>
+          <Button 
+            onClick={handleNextLesson}
+            disabled={currentLesson.type === 'quiz' && (!quizSubmitted || quizScore < (currentLesson.content_data?.passingScore || 80))}
+          >
             {currentLessonIndex === totalLessons - 1 ? 'Complete Module' : 'Next Lesson'}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
