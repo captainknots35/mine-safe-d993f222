@@ -126,6 +126,7 @@ const Lesson = () => {
 
   const getLessonContent = () => {
     const contentText = currentLesson.content_data?.text || currentLesson.description || '';
+    const sections = currentLesson.content_data?.sections || [];
     
     switch (currentLesson.type) {
       case 'video':
@@ -168,9 +169,26 @@ const Lesson = () => {
                 <Badge variant="outline">{currentLesson.duration_minutes} min read</Badge>
               </div>
             </div>
-            <div className="text-lg leading-relaxed whitespace-pre-wrap">
-              {contentText}
-            </div>
+            
+            {/* Render sections if available, otherwise fall back to text */}
+            {sections.length > 0 ? (
+              <div className="space-y-8">
+                {sections.map((section: any, index: number) => (
+                  <div key={index} className="space-y-4">
+                    <h3 className="text-2xl font-bold text-foreground border-b pb-2">
+                      {section.heading}
+                    </h3>
+                    <div className="text-base leading-relaxed whitespace-pre-wrap">
+                      {section.content}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-lg leading-relaxed whitespace-pre-wrap">
+                {contentText}
+              </div>
+            )}
           </div>
         );
     }
