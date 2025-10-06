@@ -24,7 +24,7 @@ const Lesson = () => {
   const navigate = useNavigate();
   const { user, userRole, profile, loading: authLoading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
-  const { data: modules } = useCourseModules(courseId);
+  const { data: modules, isLoading: modulesLoading } = useCourseModules(courseId);
   const { data: lessons, isLoading: lessonsLoading } = useModuleLessons(moduleId);
   const { toast } = useToast();
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
@@ -34,7 +34,7 @@ const Lesson = () => {
   //   return <Navigate to="/auth" replace />;
   // }
 
-  if (authLoading || enrollmentsLoading || lessonsLoading) {
+  if (authLoading || enrollmentsLoading || modulesLoading || lessonsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
