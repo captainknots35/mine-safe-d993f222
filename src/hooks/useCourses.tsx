@@ -63,6 +63,71 @@ export function useUserEnrollments(userId?: string) {
   });
 }
 
+export interface Module {
+  id: string;
+  course_id: string;
+  title: string;
+  description: string;
+  order_index: number;
+  duration_minutes: number;
+  regulation_reference: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Lesson {
+  id: string;
+  module_id: string;
+  title: string;
+  description: string;
+  type: 'video' | 'document' | 'quiz' | 'interactive';
+  content_url: string;
+  content_data: any;
+  order_index: number;
+  duration_minutes: number;
+  is_required: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useCourseModules(courseId?: string) {
+  return useQuery({
+    queryKey: ['modules', courseId],
+    queryFn: async () => {
+      if (!courseId) return [];
+      
+      const { data, error } = await supabase
+        .from('modules')
+        .select('*')
+        .eq('course_id', courseId)
+        .order('order_index', { ascending: true });
+      
+      if (error) throw error;
+      return data as Module[];
+    },
+    enabled: !!courseId
+  });
+}
+
+export function useModuleLessons(moduleId?: string) {
+  return useQuery({
+    queryKey: ['lessons', moduleId],
+    queryFn: async () => {
+      if (!moduleId) return [];
+      
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*')
+        .eq('module_id', moduleId)
+        .order('order_index', { ascending: true });
+      
+      if (error) throw error;
+      return data as Lesson[];
+    },
+    enabled: !!moduleId
+  });
+}
+
 export function useEnrollInCourse() {
   return async (courseId: string) => {
     const { data: { user } } = await supabase.auth.getUser();

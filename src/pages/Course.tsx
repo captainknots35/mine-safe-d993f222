@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserEnrollments } from "@/hooks/useCourses";
+import { useUserEnrollments, useCourseModules } from "@/hooks/useCourses";
 import { 
   ArrowLeft,
   Play,
@@ -22,13 +22,14 @@ const Course = () => {
   const navigate = useNavigate();
   const { user, userRole, profile, loading: authLoading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
+  const { data: modules, isLoading: modulesLoading } = useCourseModules(courseId);
 
   // Auth check disabled for testing
   // if (!authLoading && !user) {
   //   return <Navigate to="/auth" replace />;
   // }
 
-  if (authLoading || enrollmentsLoading) {
+  if (authLoading || enrollmentsLoading || modulesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -46,68 +47,12 @@ const Course = () => {
   const userName = profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User';
   const validUserRole = (userRole as 'admin' | 'instructor' | 'miner') || 'miner';
 
-  // Sample course modules - in a real app, these would come from the database
-  const modules = [
-    {
-      id: '1',
-      title: 'Introduction to Mine Safety',
-      description: 'Overview of MSHA regulations and basic safety principles',
-      duration: 2,
-      lessons: 5,
-      completed: false
-    },
-    {
-      id: '2', 
-      title: 'Hazard Recognition',
-      description: 'Identifying and assessing workplace hazards in mining operations',
-      duration: 4,
-      lessons: 8,
-      completed: false
-    },
-    {
-      id: '3',
-      title: 'Personal Protective Equipment',
-      description: 'Proper use and maintenance of safety equipment',
-      duration: 3,
-      lessons: 6,
-      completed: false
-    },
-    {
-      id: '4',
-      title: 'Emergency Procedures',
-      description: 'Response protocols for mining emergencies',
-      duration: 4,
-      lessons: 7,
-      completed: false
-    },
-    {
-      id: '5',
-      title: 'Health and Safety Regulations',
-      description: 'Understanding MSHA Part 46 requirements',
-      duration: 6,
-      lessons: 10,
-      completed: false
-    },
-    {
-      id: '6',
-      title: 'Workplace Responsibilities',
-      description: 'Employee and employer safety obligations',
-      duration: 3,
-      lessons: 5,
-      completed: false
-    },
-    {
-      id: '7',
-      title: 'Final Assessment',
-      description: 'Comprehensive test covering all course material',
-      duration: 2,
-      lessons: 1,
-      completed: false
-    }
-  ];
-
-  const completedModules = modules.filter(m => m.completed).length;
-  const progress = Math.round((completedModules / modules.length) * 100);
+  // Use real modules from Supabase
+  const courseModules = modules || [];
+  
+  // TODO: Track actual completion status from progress_tracking table
+  const completedModules = 0;
+  const progress = courseModules.length > 0 ? Math.round((completedModules / courseModules.length) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -140,7 +85,7 @@ const Course = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <BookOpen className="h-4 w-4" />
-                  {modules.length} modules
+                  {courseModules.length} modules
                 </div>
               </div>
             </div>
@@ -157,57 +102,64 @@ const Course = () => {
         <div className="grid gap-6">
           <h2 className="text-2xl font-semibold">Course Modules</h2>
           
-          {modules.map((module, index) => (
-            <Card key={module.id} className="transition-all hover:shadow-md">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium">
-                        Module {index + 1}
-                      </span>
-                      {module.completed && (
-                        <CheckCircle className="h-5 w-5 text-success" />
+          {courseModules.map((module, index) => {
+            const isCompleted = false; // TODO: Track from progress_tracking
+            const durationHours = Math.round(module.duration_minutes / 60 * 10) / 10;
+            
+            return (
+              <Card key={module.id} className="transition-all hover:shadow-md">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium">
+                          Module {index + 1}
+                        </span>
+                        {isCompleted && (
+                          <CheckCircle className="h-5 w-5 text-success" />
+                        )}
+                      </div>
+                      <CardTitle className="text-xl">{module.title}</CardTitle>
+                      <p className="text-muted-foreground mt-1">{module.description}</p>
+                      <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {durationHours} hours
+                        </div>
+                        {module.regulation_reference && (
+                          <div className="flex items-center gap-1">
+                            <FileText className="h-4 w-4" />
+                            {module.regulation_reference}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      {isCompleted ? (
+                        <Button variant="success" disabled>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Completed
+                        </Button>
+                      ) : index === 0 ? (
+                        <Button 
+                          variant="default"
+                          onClick={() => navigate(`/course/${courseId}/module/${module.id}`)}
+                        >
+                          <Play className="mr-2 h-4 w-4" />
+                          Start Module
+                        </Button>
+                      ) : (
+                        <Button variant="outline" disabled>
+                          <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mr-2" />
+                          Locked
+                        </Button>
                       )}
                     </div>
-                    <CardTitle className="text-xl">{module.title}</CardTitle>
-                    <p className="text-muted-foreground mt-1">{module.description}</p>
-                    <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {module.duration} hours
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <FileText className="h-4 w-4" />
-                        {module.lessons} lessons
-                      </div>
-                    </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {module.completed ? (
-                      <Button variant="success" disabled>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Completed
-                      </Button>
-                    ) : index === 0 || modules[index - 1]?.completed ? (
-                      <Button 
-                        variant="default"
-                        onClick={() => navigate(`/course/${courseId}/module/${module.id}`)}
-                      >
-                        <Play className="mr-2 h-4 w-4" />
-                        {index === 0 ? 'Start Module' : 'Continue Module'}
-                      </Button>
-                    ) : (
-                      <Button variant="outline" disabled>
-                        <div className="w-4 h-4 rounded-full border-2 border-muted-foreground mr-2" />
-                        Locked
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))}
+                </CardHeader>
+              </Card>
+            );
+          })}
         </div>
 
         {/* Course Completion Actions */}
