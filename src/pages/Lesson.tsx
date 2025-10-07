@@ -360,15 +360,30 @@ const Lesson = () => {
                 {sections.map((section: any, index: number) => {
                   // Check if this section should include a simulation
                   const shouldShowLOTO = section.heading?.includes('Interactive Simulation 1') || 
-                                        section.content?.includes('lovable.dev Simulation Concept') && 
-                                        section.content?.includes('LOTO');
+                                        (section.content?.includes('lovable.dev Simulation Concept') && 
+                                        section.content?.includes('LOTO'));
                   const shouldShowHighwall = section.heading?.includes('Interactive Simulation 2') ||
-                                            section.content?.includes('lovable.dev Simulation Concept') && 
-                                            section.content?.includes('Highwall');
+                                            (section.content?.includes('lovable.dev Simulation Concept') && 
+                                            section.content?.includes('Highwall'));
                   const shouldShowHaulRoad = section.heading?.includes('Interactive Simulation 3') ||
-                                            section.content?.includes('lovable.dev Simulation Concept') && 
-                                            section.content?.includes('Haul Road');
+                                            (section.content?.includes('lovable.dev Simulation Concept') && 
+                                            section.content?.includes('Haul Road'));
                   
+                  // If this is a simulation section, only show the simulation component
+                  if (shouldShowLOTO || shouldShowHighwall || shouldShowHaulRoad) {
+                    return (
+                      <div key={index} className="space-y-4">
+                        <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
+                          {section.heading}
+                        </h3>
+                        {shouldShowLOTO && <LOTOSimulation />}
+                        {shouldShowHighwall && <HighwallSimulation />}
+                        {shouldShowHaulRoad && <HaulRoadSimulation />}
+                      </div>
+                    );
+                  }
+                  
+                  // Regular content section
                   return (
                     <div key={index} className="space-y-4">
                       <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
@@ -377,23 +392,6 @@ const Lesson = () => {
                       <div className="text-base leading-relaxed whitespace-pre-line">
                         {section.content}
                       </div>
-                      
-                      {/* Embed simulations where appropriate */}
-                      {shouldShowLOTO && (
-                        <div className="my-6">
-                          <LOTOSimulation />
-                        </div>
-                      )}
-                      {shouldShowHighwall && (
-                        <div className="my-6">
-                          <HighwallSimulation />
-                        </div>
-                      )}
-                      {shouldShowHaulRoad && (
-                        <div className="my-6">
-                          <HaulRoadSimulation />
-                        </div>
-                      )}
                     </div>
                   );
                 })}
