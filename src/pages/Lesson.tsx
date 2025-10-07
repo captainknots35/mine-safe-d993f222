@@ -358,16 +358,19 @@ const Lesson = () => {
             {sections.length > 0 ? (
               <div className="space-y-8">
                 {sections.map((section: any, index: number) => {
-                  // Check if this section should include a simulation
-                  const shouldShowLOTO = section.heading?.includes('Interactive Simulation 1') || 
-                                        (section.content?.includes('lovable.dev Simulation Concept') && 
-                                        section.content?.includes('LOTO'));
-                  const shouldShowHighwall = section.heading?.includes('Interactive Simulation 2') ||
-                                            (section.content?.includes('lovable.dev Simulation Concept') && 
-                                            section.content?.includes('Highwall'));
-                  const shouldShowHaulRoad = section.heading?.includes('Interactive Simulation 3') ||
-                                            (section.content?.includes('lovable.dev Simulation Concept') && 
-                                            section.content?.includes('Haul Road'));
+                  // Case-insensitive detection for simulation sections
+                  const h = (section.heading || '').toLowerCase();
+                  const c = (section.content || '').toLowerCase();
+                  const isSimConcept = c.includes('lovable.dev simulation concept');
+
+                  const shouldShowLOTO = h.includes('interactive simulation 1') ||
+                    (isSimConcept && (c.includes('loto') || c.includes('lockout/tagout')));
+
+                  const shouldShowHighwall = h.includes('interactive simulation 2') ||
+                    (isSimConcept && c.includes('highwall'));
+
+                  const shouldShowHaulRoad = h.includes('interactive simulation 3') ||
+                    (isSimConcept && (c.includes('haul road') || c.includes('spotter')));
                   
                   // If this is a simulation section, only show the simulation component
                   if (shouldShowLOTO || shouldShowHighwall || shouldShowHaulRoad) {
