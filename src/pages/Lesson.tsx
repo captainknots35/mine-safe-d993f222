@@ -22,6 +22,9 @@ import {
   XCircle,
   AlertCircle
 } from "lucide-react";
+import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
+import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
+import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
 
 const Lesson = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -354,19 +357,49 @@ const Lesson = () => {
             {/* Render sections if available, otherwise fall back to text */}
             {sections.length > 0 ? (
               <div className="space-y-8">
-                {sections.map((section: any, index: number) => (
-                  <div key={index} className="space-y-4">
-                    <h3 className="text-2xl font-bold text-foreground border-b pb-2">
-                      {section.heading}
-                    </h3>
-                    <div className="text-base leading-relaxed whitespace-pre-wrap">
-                      {section.content}
+                {sections.map((section: any, index: number) => {
+                  // Check if this section should include a simulation
+                  const shouldShowLOTO = section.heading?.includes('Interactive Simulation 1') || 
+                                        section.content?.includes('lovable.dev Simulation Concept') && 
+                                        section.content?.includes('LOTO');
+                  const shouldShowHighwall = section.heading?.includes('Interactive Simulation 2') ||
+                                            section.content?.includes('lovable.dev Simulation Concept') && 
+                                            section.content?.includes('Highwall');
+                  const shouldShowHaulRoad = section.heading?.includes('Interactive Simulation 3') ||
+                                            section.content?.includes('lovable.dev Simulation Concept') && 
+                                            section.content?.includes('Haul Road');
+                  
+                  return (
+                    <div key={index} className="space-y-4">
+                      <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
+                        {section.heading}
+                      </h3>
+                      <div className="text-base leading-relaxed whitespace-pre-line">
+                        {section.content}
+                      </div>
+                      
+                      {/* Embed simulations where appropriate */}
+                      {shouldShowLOTO && (
+                        <div className="my-6">
+                          <LOTOSimulation />
+                        </div>
+                      )}
+                      {shouldShowHighwall && (
+                        <div className="my-6">
+                          <HighwallSimulation />
+                        </div>
+                      )}
+                      {shouldShowHaulRoad && (
+                        <div className="my-6">
+                          <HaulRoadSimulation />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-lg leading-relaxed whitespace-pre-wrap">
+              <div className="text-lg leading-relaxed whitespace-pre-line">
                 {contentText}
               </div>
             )}
