@@ -25,6 +25,7 @@ import {
 import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
 import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
 import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
+import ReactMarkdown from 'react-markdown';
 
 const Lesson = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -186,6 +187,9 @@ const Lesson = () => {
   };
 
   const getLessonContent = () => {
+    // Check for full markdown content first (new format)
+    const markdownContent = currentLesson.content_data?.content;
+    // Fall back to old formats
     const contentText = currentLesson.content_data?.text || currentLesson.description || '';
     const sections = currentLesson.content_data?.sections || [];
     
@@ -345,7 +349,7 @@ const Lesson = () => {
         );
       default:
         return (
-          <div className="prose max-w-none">
+          <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2 prose-h2:mb-4 prose-p:text-base prose-p:leading-relaxed prose-li:text-base prose-li:leading-relaxed prose-table:text-sm prose-strong:text-foreground prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-2">
             <div className="bg-muted/50 rounded-lg p-6 mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="h-5 w-5 text-primary" />
@@ -354,8 +358,14 @@ const Lesson = () => {
               </div>
             </div>
             
-            {/* Render sections if available, otherwise fall back to text */}
-            {sections.length > 0 ? (
+            {/* Render markdown content if available (new format) */}
+            {markdownContent ? (
+              <div className="space-y-6 text-base leading-relaxed">
+                <ReactMarkdown>
+                  {markdownContent}
+                </ReactMarkdown>
+              </div>
+            ) : sections.length > 0 ? (
               <div className="space-y-8">
                 {sections.map((section: any, index: number) => {
                   // Case-insensitive detection for simulation sections
