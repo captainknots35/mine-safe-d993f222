@@ -25,6 +25,7 @@ import {
 import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
 import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
 import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
+import { EmergencySimulationLauncher } from "@/components/Simulations/EmergencySimulationLauncher";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -196,6 +197,12 @@ const Lesson = () => {
     const sections = currentLesson.content_data?.sections || [];
     
     switch (currentLesson.type) {
+      case 'interactive':
+        return (
+          <div className="space-y-6">
+            <EmergencySimulationLauncher />
+          </div>
+        );
       case 'video':
         return (
           <div className="space-y-6">
