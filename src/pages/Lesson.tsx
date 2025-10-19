@@ -26,6 +26,8 @@ import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
 import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
 import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
 const Lesson = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -354,7 +356,7 @@ const Lesson = () => {
             {/* Render markdown content if available (new format) */}
             {markdownContent ? (
               <div className="space-y-6">
-                <ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                   {markdownContent}
                 </ReactMarkdown>
               </div>
