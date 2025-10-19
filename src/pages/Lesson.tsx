@@ -349,18 +349,11 @@ const Lesson = () => {
         );
       default:
         return (
-          <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2 prose-h2:mb-4 prose-p:text-base prose-p:leading-relaxed prose-li:text-base prose-li:leading-relaxed prose-table:text-sm prose-strong:text-foreground prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-2">
-            <div className="bg-muted/50 rounded-lg p-6 mb-6">
-              <div className="flex items-center gap-2 mb-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                <span className="font-medium">Reading Material</span>
-                <Badge variant="outline">{currentLesson.duration_minutes} min read</Badge>
-              </div>
-            </div>
+          <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2 prose-h2:mb-4 prose-p:text-base prose-p:leading-relaxed prose-li:text-base prose-li:leading-relaxed prose-table:text-sm prose-table:border-collapse prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-2 prose-td:border prose-td:border-border prose-td:p-2 prose-strong:text-foreground prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-2 prose-code:bg-muted prose-code:px-1 prose-code:rounded">
             
             {/* Render markdown content if available (new format) */}
             {markdownContent ? (
-              <div className="space-y-6 text-base leading-relaxed">
+              <div className="space-y-6">
                 <ReactMarkdown>
                   {markdownContent}
                 </ReactMarkdown>
