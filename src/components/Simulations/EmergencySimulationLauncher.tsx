@@ -4,6 +4,10 @@ import { AlertTriangle, Heart, Truck, ArrowLeft } from 'lucide-react';
 import { useSimulation, ScenarioId } from '@/contexts/SimulationContext';
 import { GroundFailureSimulation } from './GroundFailureSimulation';
 import { CrushSyndromeSimulation } from './CrushSyndromeSimulation';
+import { HazComSimulation } from './HazComSimulation';
+import { PPESelectionSimulation } from './PPESelectionSimulation';
+import { ChemicalSpillSimulation } from './ChemicalSpillSimulation';
+import { ThermalStressSimulation } from './ThermalStressSimulation';
 import { useNavigate } from 'react-router-dom';
 
 export function EmergencySimulationLauncher() {
@@ -20,38 +24,38 @@ export function EmergencySimulationLauncher() {
   };
 
   // If a scenario is active, render the appropriate simulation
-  if (state.scenarioId === 'S2') {
-    if (state.scenarioEnded) {
-      return (
-        <div className="space-y-6">
-          <GroundFailureSimulation />
-          <div className="flex justify-center">
-            <Button onClick={handleReturn} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Return to Simulations
-            </Button>
-          </div>
-        </div>
-      );
-    }
-    return <GroundFailureSimulation />;
-  }
+  const renderActiveSimulation = () => {
+    const simulationMap: Record<string, JSX.Element> = {
+      'S2': <GroundFailureSimulation />,
+      'S3': <CrushSyndromeSimulation />,
+      'hazcom_assessment': <HazComSimulation />,
+      'ppe_selection': <PPESelectionSimulation />,
+      'chemical_spill': <ChemicalSpillSimulation />,
+      'thermal_stress': <ThermalStressSimulation />
+    };
 
-  if (state.scenarioId === 'S3') {
-    if (state.scenarioEnded) {
-      return (
-        <div className="space-y-6">
-          <CrushSyndromeSimulation />
-          <div className="flex justify-center">
-            <Button onClick={handleReturn} variant="outline">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Return to Simulations
-            </Button>
+    if (state.scenarioId && simulationMap[state.scenarioId]) {
+      if (state.scenarioEnded) {
+        return (
+          <div className="space-y-6">
+            {simulationMap[state.scenarioId]}
+            <div className="flex justify-center">
+              <Button onClick={handleReturn} variant="outline">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Return to Simulations
+              </Button>
+            </div>
           </div>
-        </div>
-      );
+        );
+      }
+      return simulationMap[state.scenarioId];
     }
-    return <CrushSyndromeSimulation />;
+    return null;
+  };
+
+  const activeSimulation = renderActiveSimulation();
+  if (activeSimulation) {
+    return activeSimulation;
   }
 
   // Scenario selection screen
