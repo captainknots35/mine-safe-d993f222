@@ -39,7 +39,7 @@ const Lesson = () => {
   const { data: lessons, isLoading: lessonsLoading } = useModuleLessons(moduleId);
   const { toast } = useToast();
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(0);
 
@@ -135,10 +135,10 @@ const Lesson = () => {
     }
   };
 
-  const handleQuizAnswer = (questionId: number, answerIndex: number) => {
+  const handleQuizAnswer = (questionId: string, answerId: string) => {
     setQuizAnswers(prev => ({
       ...prev,
-      [questionId]: answerIndex
+      [questionId]: answerId
     }));
   };
 
@@ -252,20 +252,25 @@ const Lesson = () => {
                     </CardHeader>
                     <CardContent>
                       <RadioGroup
-                        value={quizAnswers[question.id]?.toString()}
-                        onValueChange={(value) => handleQuizAnswer(question.id, parseInt(value))}
+                        value={quizAnswers[question.id]}
+                        onValueChange={(value) => handleQuizAnswer(question.id, value)}
                       >
-                        {question.options.map((option: string, optIndex: number) => (
-                          <div key={optIndex} className="flex items-start space-x-3 space-y-0 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                            <RadioGroupItem value={optIndex.toString()} id={`q${question.id}-opt${optIndex}`} />
-                            <Label 
-                              htmlFor={`q${question.id}-opt${optIndex}`}
-                              className="font-normal cursor-pointer flex-1 leading-relaxed"
-                            >
-                              {option}
-                            </Label>
-                          </div>
-                        ))}
+                        {question.options.map((option: any, optIndex: number) => {
+                          const optionText = typeof option === 'string' ? option : option.text;
+                          const optionId = typeof option === 'string' ? optIndex.toString() : option.id;
+                          
+                          return (
+                            <div key={optionId} className="flex items-start space-x-3 space-y-0 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                              <RadioGroupItem value={optionId} id={`q${question.id}-opt${optionId}`} />
+                              <Label 
+                                htmlFor={`q${question.id}-opt${optionId}`}
+                                className="font-normal cursor-pointer flex-1 leading-relaxed"
+                              >
+                                {optionText}
+                              </Label>
+                            </div>
+                          );
+                        })}
                       </RadioGroup>
                     </CardContent>
                   </Card>
