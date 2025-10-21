@@ -14,16 +14,6 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [provider, setProvider] = useState<'youtube' | 'nocookie' | 'invidious' | 'piped'>('youtube');
 
-  useEffect(() => {
-    try {
-      if (window.location.hostname.includes('lovableproject.com') || window.top !== window.self) {
-        setProvider('invidious');
-      }
-    } catch {
-      // ignore cross-origin access errors
-    }
-  }, []);
-
   // Extract YouTube video ID from URL
   const getYouTubeId = (url: string) => {
     const patterns = [
