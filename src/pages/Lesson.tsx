@@ -8,8 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserEnrollments, useCourseModules, useModuleLessons } from "@/hooks/useCourses";
 import { useToast } from "@/hooks/use-toast";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { 
   ArrowLeft,
   ArrowRight,
@@ -22,13 +20,16 @@ import {
   XCircle,
   AlertCircle
 } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
 import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
 import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
 import { EmergencySimulationLauncher } from "@/components/Simulations/EmergencySimulationLauncher";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
 
 const Lesson = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
@@ -204,20 +205,36 @@ const Lesson = () => {
           </div>
         );
       case 'video':
+        const videoUrl = currentLesson.content_data?.videoUrl || currentLesson.content_url;
+        const videoTitle = currentLesson.content_data?.videoTitle || currentLesson.title;
+        const videoDescription = currentLesson.content_data?.videoDescription || contentText;
+        
         return (
           <div className="space-y-6">
-            <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <Video className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">Video Player</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Duration: {currentLesson.duration_minutes} minutes
-                </p>
+            {videoUrl ? (
+              <VideoPlayer 
+                videoUrl={videoUrl}
+                title={videoTitle}
+                description={videoDescription}
+              />
+            ) : (
+              <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <Video className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">No video available</p>
+                </div>
               </div>
-            </div>
-            <div className="prose max-w-none">
-              <p>{contentText}</p>
-            </div>
+            )}
+            {currentLesson.content_data?.additionalContent && (
+              <div className="prose max-w-none">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {currentLesson.content_data.additionalContent}
+                </ReactMarkdown>
+              </div>
+            )}
           </div>
         );
       case 'quiz':
