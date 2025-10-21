@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -11,6 +12,7 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [provider, setProvider] = useState<'youtube' | 'nocookie' | 'invidious'>('youtube');
 
   // Extract YouTube video ID from URL
   const getYouTubeId = (url: string) => {
@@ -27,11 +29,21 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
   };
 
   const videoId = getYouTubeId(videoUrl);
-  const embedUrl = videoId
-    ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`
-    : videoUrl;
 
-  console.info('VideoPlayer embed debug', { videoUrl, videoId, embedUrl });
+  const buildEmbedUrl = (id: string, prov: 'youtube' | 'nocookie' | 'invidious') => {
+    switch (prov) {
+      case 'nocookie':
+        return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
+      case 'invidious':
+        return `https://yewtu.be/embed/${id}`;
+      default:
+        return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
+    }
+  };
+
+  const embedUrl = videoId ? buildEmbedUrl(videoId, provider) : videoUrl;
+
+  console.info('VideoPlayer embed debug', { videoUrl, videoId, embedUrl, provider });
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -61,6 +73,26 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
             loading="lazy"
           />
           
+          {videoId && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-12 bg-black/50 hover:bg-black/70 text-white z-10"
+                  aria-label="Change embed provider"
+                >
+                  Alt
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[220px]">
+                <DropdownMenuItem onClick={() => setProvider('youtube')}>YouTube</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setProvider('nocookie')}>YouTube (NoCookie)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setProvider('invidious')}>Invidious (yewtu.be)</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           <Button
             variant="ghost"
             size="icon"
