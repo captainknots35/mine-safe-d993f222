@@ -441,7 +441,7 @@ const Lesson = () => {
               )}
             </div>
 
-            {Array.isArray(currentLesson.content_data?.videos) && currentLesson.content_data.videos.length > 0 && (
+{currentLesson.type !== 'document' && Array.isArray(currentLesson.content_data?.videos) && currentLesson.content_data.videos.length > 0 && (
               <div className="space-y-6 mt-8">
                 {currentLesson.content_data.videos.map((v: any, idx: number) => (
                   <div key={idx} className="not-prose">
