@@ -16,7 +16,7 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
   const getYouTubeEmbedUrl = (url: string) => {
     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
     if (videoIdMatch && videoIdMatch[1]) {
-      return `https://www.youtube-nocookie.com/embed/${videoIdMatch[1]}?rel=0&modestbranding=1&origin=${window.location.origin}`;
+      return `https://www.youtube.com/embed/${videoIdMatch[1]}`;
     }
     return url;
   };
@@ -43,9 +43,10 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
           <iframe
             src={embedUrl}
             title={title || 'Training Video'}
-            className="absolute inset-0 w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            className="absolute inset-0 w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
+            sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
           />
           
           <Button
