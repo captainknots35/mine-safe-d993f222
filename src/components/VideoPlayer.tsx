@@ -13,15 +13,25 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Extract YouTube video ID from URL
-  const getYouTubeEmbedUrl = (url: string) => {
-    const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
-    if (videoIdMatch && videoIdMatch[1]) {
-      return `https://www.youtube.com/embed/${videoIdMatch[1]}`;
+  const getYouTubeId = (url: string) => {
+    const patterns = [
+      /[?&]v=([^&]+)/, // youtube.com/watch?v=
+      /youtu\.be\/([^?&]+)/, // youtu.be/ID
+      /youtube\.com\/embed\/([^?&]+)/, // youtube.com/embed/ID
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m?.[1]) return m[1];
     }
-    return url;
+    return null;
   };
 
-  const embedUrl = getYouTubeEmbedUrl(videoUrl);
+  const videoId = getYouTubeId(videoUrl);
+  const embedUrl = videoId
+    ? `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`
+    : videoUrl;
+
+  console.info('VideoPlayer embed debug', { videoUrl, videoId, embedUrl });
 
   const toggleFullscreen = () => {
     setIsFullscreen(!isFullscreen);
@@ -47,6 +57,8 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin"
+            loading="lazy"
           />
           
           <Button
@@ -58,6 +70,21 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
             {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </Button>
         </div>
+
+        {videoId && (
+          <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-t">
+            <p className="text-xs text-muted-foreground">If the video is blocked by your network, open it directly:</p>
+            <a
+              href={`https://www.youtube.com/watch?v=${videoId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-primary hover:underline"
+              aria-label={`Open ${title || 'video'} on YouTube`}
+            >
+              Watch on YouTube
+            </a>
+          </div>
+        )}
 
         {description && (
           <div className="p-4 bg-muted/30">
