@@ -66,11 +66,8 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
             src={embedUrl}
             title={title || 'Training Video'}
             className="absolute inset-0 w-full h-full border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
-            sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
-            referrerPolicy="strict-origin-when-cross-origin"
-            loading="lazy"
           />
           
           {videoId && (
