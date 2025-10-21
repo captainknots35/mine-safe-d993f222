@@ -380,65 +380,81 @@ const Lesson = () => {
         );
       default:
         return (
-          <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2 prose-h2:mb-4 prose-p:text-base prose-p:leading-relaxed prose-li:text-base prose-li:leading-relaxed prose-table:text-sm prose-table:border-collapse prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-2 prose-td:border prose-td:border-border prose-td:p-2 prose-strong:text-foreground prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-2 prose-code:bg-muted prose-code:px-1 prose-code:rounded">
-            
-            {/* Render markdown content if available (new format) */}
-            {markdownContent ? (
-              <div className="space-y-6">
-                <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                  {markdownContent}
-                </ReactMarkdown>
-              </div>
-            ) : sections.length > 0 ? (
-              <div className="space-y-8">
-                {sections.map((section: any, index: number) => {
-                  // Case-insensitive detection for simulation sections
-                  const h = (section.heading || '').toLowerCase();
-                  const c = (section.content || '').toLowerCase();
-                  const isSimConcept = c.includes('lovable.dev simulation concept');
+          <>
+            <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2 prose-h2:mb-4 prose-p:text-base prose-p:leading-relaxed prose-li:text-base prose-li:leading-relaxed prose-table:text-sm prose-table:border-collapse prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-2 prose-td:border prose-td:border-border prose-td:p-2 prose-strong:text-foreground prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-2 prose-code:bg-muted prose-code:px-1 prose-code:rounded">
+              
+              {/* Render markdown content if available (new format) */}
+              {markdownContent ? (
+                <div className="space-y-6">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                    {markdownContent}
+                  </ReactMarkdown>
+                </div>
+              ) : sections.length > 0 ? (
+                <div className="space-y-8">
+                  {sections.map((section: any, index: number) => {
+                    // Case-insensitive detection for simulation sections
+                    const h = (section.heading || '').toLowerCase();
+                    const c = (section.content || '').toLowerCase();
+                    const isSimConcept = c.includes('lovable.dev simulation concept');
 
-                  const shouldShowLOTO = h.includes('interactive simulation 1') ||
-                    (isSimConcept && (c.includes('loto') || c.includes('lockout/tagout')));
+                    const shouldShowLOTO = h.includes('interactive simulation 1') ||
+                      (isSimConcept && (c.includes('loto') || c.includes('lockout/tagout')));
 
-                  const shouldShowHighwall = h.includes('interactive simulation 2') ||
-                    (isSimConcept && c.includes('highwall'));
+                    const shouldShowHighwall = h.includes('interactive simulation 2') ||
+                      (isSimConcept && c.includes('highwall'));
 
-                  const shouldShowHaulRoad = h.includes('interactive simulation 3') ||
-                    (isSimConcept && (c.includes('haul road') || c.includes('spotter')));
-                  
-                  // If this is a simulation section, only show the simulation component
-                  if (shouldShowLOTO || shouldShowHighwall || shouldShowHaulRoad) {
+                    const shouldShowHaulRoad = h.includes('interactive simulation 3') ||
+                      (isSimConcept && (c.includes('haul road') || c.includes('spotter')));
+                    
+                    // If this is a simulation section, only show the simulation component
+                    if (shouldShowLOTO || shouldShowHighwall || shouldShowHaulRoad) {
+                      return (
+                        <div key={index} className="space-y-4">
+                          <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
+                            {section.heading}
+                          </h3>
+                          {shouldShowLOTO && <LOTOSimulation />}
+                          {shouldShowHighwall && <HighwallSimulation />}
+                          {shouldShowHaulRoad && <HaulRoadSimulation />}
+                        </div>
+                      );
+                    }
+                    
+                    // Regular content section
                     return (
                       <div key={index} className="space-y-4">
                         <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
                           {section.heading}
                         </h3>
-                        {shouldShowLOTO && <LOTOSimulation />}
-                        {shouldShowHighwall && <HighwallSimulation />}
-                        {shouldShowHaulRoad && <HaulRoadSimulation />}
+                        <div className="text-base leading-relaxed whitespace-pre-line">
+                          {section.content}
+                        </div>
                       </div>
                     );
-                  }
-                  
-                  // Regular content section
-                  return (
-                    <div key={index} className="space-y-4">
-                      <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
-                        {section.heading}
-                      </h3>
-                      <div className="text-base leading-relaxed whitespace-pre-line">
-                        {section.content}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-lg leading-relaxed whitespace-pre-line">
-                {contentText}
+                  })}
+                </div>
+              ) : (
+                <div className="text-lg leading-relaxed whitespace-pre-line">
+                  {contentText}
+                </div>
+              )}
+            </div>
+
+            {Array.isArray(currentLesson.content_data?.videos) && currentLesson.content_data.videos.length > 0 && (
+              <div className="space-y-6 mt-8">
+                {currentLesson.content_data.videos.map((v: any, idx: number) => (
+                  <div key={idx} className="not-prose">
+                    <VideoPlayer 
+                      videoUrl={v.url}
+                      title={v.title || currentLesson.title}
+                      description={v.description || currentLesson.description}
+                    />
+                  </div>
+                ))}
               </div>
             )}
-          </div>
+          </>
         );
     }
   };
