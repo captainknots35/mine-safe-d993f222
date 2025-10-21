@@ -16,7 +16,7 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
   const getYouTubeEmbedUrl = (url: string) => {
     const videoIdMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
     if (videoIdMatch && videoIdMatch[1]) {
-      return `https://www.youtube.com/embed/${videoIdMatch[1]}?rel=0&modestbranding=1`;
+      return `https://www.youtube-nocookie.com/embed/${videoIdMatch[1]}?rel=0&modestbranding=1&origin=${window.location.origin}`;
     }
     return url;
   };
