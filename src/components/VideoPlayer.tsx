@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Play, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -12,7 +12,17 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [provider, setProvider] = useState<'youtube' | 'nocookie' | 'invidious'>('youtube');
+  const [provider, setProvider] = useState<'youtube' | 'nocookie' | 'invidious' | 'piped'>('youtube');
+
+  useEffect(() => {
+    try {
+      if (window.location.hostname.includes('lovableproject.com') || window.top !== window.self) {
+        setProvider('invidious');
+      }
+    } catch {
+      // ignore cross-origin access errors
+    }
+  }, []);
 
   // Extract YouTube video ID from URL
   const getYouTubeId = (url: string) => {
@@ -30,12 +40,14 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
 
   const videoId = getYouTubeId(videoUrl);
 
-  const buildEmbedUrl = (id: string, prov: 'youtube' | 'nocookie' | 'invidious') => {
+  const buildEmbedUrl = (id: string, prov: 'youtube' | 'nocookie' | 'invidious' | 'piped') => {
     switch (prov) {
       case 'nocookie':
         return `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
       case 'invidious':
         return `https://yewtu.be/embed/${id}`;
+      case 'piped':
+        return `https://piped.video/embed/${id}`;
       default:
         return `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
     }
@@ -86,6 +98,7 @@ export const VideoPlayer = ({ videoUrl, title, description }: VideoPlayerProps) 
                 <DropdownMenuItem onClick={() => setProvider('youtube')}>YouTube</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setProvider('nocookie')}>YouTube (NoCookie)</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setProvider('invidious')}>Invidious (yewtu.be)</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setProvider('piped')}>Piped (piped.video)</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
