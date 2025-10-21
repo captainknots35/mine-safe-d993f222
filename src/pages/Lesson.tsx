@@ -393,7 +393,31 @@ const Lesson = () => {
               ) : sections.length > 0 ? (
                 <div className="space-y-8">
                   {sections.map((section: any, index: number) => {
-                    // Case-insensitive detection for simulation sections
+                    // Handle video sections
+                    if (section.type === 'video') {
+                      return (
+                        <div key={index} className="not-prose">
+                          <VideoPlayer 
+                            videoUrl={section.videoUrl}
+                            title={section.title}
+                            description={section.description}
+                          />
+                        </div>
+                      );
+                    }
+                    
+                    // Handle content sections with markdown
+                    if (section.type === 'content') {
+                      return (
+                        <div key={index}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                            {section.content}
+                          </ReactMarkdown>
+                        </div>
+                      );
+                    }
+                    
+                    // Legacy section format
                     const h = (section.heading || '').toLowerCase();
                     const c = (section.content || '').toLowerCase();
                     const isSimConcept = c.includes('lovable.dev simulation concept');
@@ -407,7 +431,6 @@ const Lesson = () => {
                     const shouldShowHaulRoad = h.includes('interactive simulation 3') ||
                       (isSimConcept && (c.includes('haul road') || c.includes('spotter')));
                     
-                    // If this is a simulation section, only show the simulation component
                     if (shouldShowLOTO || shouldShowHighwall || shouldShowHaulRoad) {
                       return (
                         <div key={index} className="space-y-4">
@@ -421,7 +444,6 @@ const Lesson = () => {
                       );
                     }
                     
-                    // Regular content section
                     return (
                       <div key={index} className="space-y-4">
                         <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-2">
