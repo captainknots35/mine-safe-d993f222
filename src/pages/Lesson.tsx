@@ -399,6 +399,21 @@ const Lesson = () => {
               ) : sections.length > 0 ? (
                 <div className="space-y-10">
                   {sections.map((section: any, index: number) => {
+                    // Handle video sections
+                    if (section.type === 'video') {
+                      return (
+                        <div key={index} className="space-y-4 my-8">
+                          <div className="not-prose">
+                            <VideoPlayer 
+                              videoUrl={section.url} 
+                              title={section.title} 
+                              description={section.description} 
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+
                     // Handle interactive simulation sections
                     if (section.type === 'interactive') {
                       const simType = section.simulationType;
