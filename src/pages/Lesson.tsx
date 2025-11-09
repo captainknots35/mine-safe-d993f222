@@ -25,7 +25,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { VideoPlayer } from "@/components/VideoPlayer";
+import { BasicVideo } from "@/components/BasicVideo";
 import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
 import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
 import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
@@ -218,8 +218,8 @@ const Lesson = () => {
         return (
           <div className="space-y-6">
             {videoUrl ? (
-              <VideoPlayer 
-                videoUrl={videoUrl}
+              <BasicVideo 
+                src={videoUrl}
                 title={videoTitle}
                 description={videoDescription}
               />
@@ -404,8 +404,8 @@ const Lesson = () => {
                       return (
                         <div key={index} className="space-y-4 my-8">
                           <div className="not-prose">
-                            <VideoPlayer 
-                              videoUrl={section.url} 
+                            <BasicVideo 
+                              src={section.url} 
                               title={section.title} 
                               description={section.description} 
                             />
@@ -505,8 +505,8 @@ const Lesson = () => {
                     if (section.type === 'video') {
                       return (
                         <div key={index} className="not-prose">
-                          <VideoPlayer 
-                            videoUrl={section.videoUrl}
+                          <BasicVideo 
+                            src={section.videoUrl}
                             title={section.title}
                             description={section.description}
                           />
@@ -575,8 +575,8 @@ const Lesson = () => {
               <div className="space-y-6 mt-8">
                 {currentLesson.content_data.videos.map((v: any, idx: number) => (
                   <div key={idx} className="not-prose">
-                    <VideoPlayer 
-                      videoUrl={v.url}
+                    <BasicVideo 
+                      src={v.url}
                       title={v.title || currentLesson.title}
                       description={v.description || currentLesson.description}
                     />
