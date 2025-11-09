@@ -199,9 +199,15 @@ const Lesson = () => {
     
     switch (currentLesson.type) {
       case 'interactive':
+        // Check for specific simulation types in content_data
+        const simulationType = currentLesson.content_data?.simulationType;
+        
         return (
           <div className="space-y-6">
-            <EmergencySimulationLauncher />
+            {simulationType === 'loto' && <LOTOSimulation />}
+            {simulationType === 'highwall' && <HighwallSimulation />}
+            {simulationType === 'haulroad' && <HaulRoadSimulation />}
+            {!simulationType && <EmergencySimulationLauncher />}
           </div>
         );
       case 'video':
@@ -381,7 +387,7 @@ const Lesson = () => {
       default:
         return (
           <>
-            <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-2 prose-h2:mb-4 prose-p:text-base prose-p:leading-relaxed prose-li:text-base prose-li:leading-relaxed prose-table:text-sm prose-table:border-collapse prose-th:border prose-th:border-border prose-th:bg-muted prose-th:p-2 prose-td:border prose-td:border-border prose-td:p-2 prose-strong:text-foreground prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-2 prose-code:bg-muted prose-code:px-1 prose-code:rounded">
+            <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-4xl prose-h1:mb-6 prose-h2:text-3xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-2xl prose-h3:mt-6 prose-h3:mb-3 prose-h2:border-b-2 prose-h2:border-primary/20 prose-h2:pb-3 prose-p:text-lg prose-p:leading-relaxed prose-p:mb-4 prose-li:text-lg prose-li:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-table:text-base prose-table:my-6 prose-table:border-collapse prose-th:border prose-th:border-border prose-th:bg-primary/10 prose-th:p-3 prose-th:font-semibold prose-td:border prose-td:border-border prose-td:p-3 prose-strong:text-foreground prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-4 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-base">
               
               {/* Render markdown content if available (new format) */}
               {markdownContent ? (
@@ -391,8 +397,68 @@ const Lesson = () => {
                   </ReactMarkdown>
                 </div>
               ) : sections.length > 0 ? (
-                <div className="space-y-8">
+                <div className="space-y-10">
                   {sections.map((section: any, index: number) => {
+                    // Handle text sections with title and content
+                    if (section.type === 'text' || section.title) {
+                      return (
+                        <div key={index} className="space-y-4">
+                          {section.title && (
+                            <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-3 mb-4">
+                              {section.title}
+                            </h3>
+                          )}
+                          <div className="text-lg leading-relaxed whitespace-pre-wrap">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                              {section.content}
+                            </ReactMarkdown>
+                          </div>
+                        </div>
+                      );
+                    }
+                    
+                    // Handle table sections
+                    if (section.type === 'table') {
+                      return (
+                        <div key={index} className="space-y-4 not-prose">
+                          {section.title && (
+                            <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-3">
+                              {section.title}
+                            </h3>
+                          )}
+                          <div className="overflow-x-auto rounded-lg border border-border">
+                            <table className="w-full text-base">
+                              {section.headers && (
+                                <thead className="bg-primary/10">
+                                  <tr>
+                                    {section.headers.map((header: string, hIndex: number) => (
+                                      <th key={hIndex} className="p-3 text-left font-semibold border-b-2 border-border">
+                                        {header}
+                                      </th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                              )}
+                              <tbody>
+                                {section.rows?.map((row: string[], rIndex: number) => (
+                                  <tr key={rIndex} className="hover:bg-muted/50 transition-colors">
+                                    {row.map((cell: string, cIndex: number) => (
+                                      <td key={cIndex} className="p-3 border-b border-border">
+                                        {cell}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          {section.note && (
+                            <p className="text-sm text-muted-foreground italic">{section.note}</p>
+                          )}
+                        </div>
+                      );
+                    }
+                    
                     // Handle video sections
                     if (section.type === 'video') {
                       return (
