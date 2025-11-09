@@ -399,6 +399,33 @@ const Lesson = () => {
               ) : sections.length > 0 ? (
                 <div className="space-y-10">
                   {sections.map((section: any, index: number) => {
+                    // Handle interactive simulation sections
+                    if (section.type === 'interactive') {
+                      const simType = section.simulationType;
+                      return (
+                        <div key={index} className="space-y-6">
+                          {section.title && (
+                            <h3 className="text-2xl font-bold text-foreground border-b-2 border-primary/20 pb-3 mb-4">
+                              {section.title}
+                            </h3>
+                          )}
+                          {section.content && (
+                            <div className="text-lg leading-relaxed mb-6">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                {section.content}
+                              </ReactMarkdown>
+                            </div>
+                          )}
+                          <div className="not-prose">
+                            {simType === 'loto' && <LOTOSimulation />}
+                            {simType === 'highwall' && <HighwallSimulation />}
+                            {simType === 'haulroad' && <HaulRoadSimulation />}
+                            {!simType && <EmergencySimulationLauncher />}
+                          </div>
+                        </div>
+                      );
+                    }
+                    
                     // Handle text sections with title and content
                     if (section.type === 'text' || section.title) {
                       return (
