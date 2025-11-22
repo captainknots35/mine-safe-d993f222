@@ -408,7 +408,7 @@ const Lesson = () => {
                         <div key={index} className="space-y-4 my-8">
                           <div className="not-prose">
                             <BasicVideo 
-                              src={section.url} 
+                              src={section.videoUrl || section.url} 
                               title={section.title} 
                               description={section.description} 
                             />
