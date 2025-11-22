@@ -390,13 +390,16 @@ const Lesson = () => {
             <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-h1:text-4xl prose-h1:mb-6 prose-h2:text-3xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-2xl prose-h3:mt-6 prose-h3:mb-3 prose-h2:border-b-2 prose-h2:border-primary/20 prose-h2:pb-3 prose-p:text-lg prose-p:leading-relaxed prose-p:mb-4 prose-li:text-lg prose-li:leading-relaxed prose-ul:my-4 prose-ol:my-4 prose-table:text-base prose-table:my-6 prose-table:border-collapse prose-th:border prose-th:border-border prose-th:bg-primary/10 prose-th:p-3 prose-th:font-semibold prose-td:border prose-td:border-border prose-td:p-3 prose-strong:text-foreground prose-strong:font-semibold prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/50 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-4 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-base">
               
               {/* Render markdown content if available (new format) */}
-              {markdownContent ? (
+              {markdownContent && (
                 <div className="space-y-6">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                     {markdownContent}
                   </ReactMarkdown>
                 </div>
-              ) : sections.length > 0 ? (
+              )}
+              
+              {/* Render sections (including videos) */}
+              {sections.length > 0 && (
                 <div className="space-y-10">
                   {sections.map((section: any, index: number) => {
                     // Handle video sections
@@ -450,11 +453,13 @@ const Lesson = () => {
                               {section.title}
                             </h3>
                           )}
-                          <div className="text-lg leading-relaxed whitespace-pre-wrap">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                              {section.content}
-                            </ReactMarkdown>
-                          </div>
+                          {section.content && (
+                            <div className="text-lg leading-relaxed">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                                {section.content}
+                              </ReactMarkdown>
+                            </div>
+                          )}
                         </div>
                       );
                     }
@@ -501,12 +506,12 @@ const Lesson = () => {
                       );
                     }
                     
-                    // Handle video sections
-                    if (section.type === 'video') {
+                    // Handle video sections (alternative format)
+                    if (section.type === 'video' || section.videoUrl) {
                       return (
                         <div key={index} className="not-prose">
                           <BasicVideo 
-                            src={section.videoUrl}
+                            src={section.videoUrl || section.url}
                             title={section.title}
                             description={section.description}
                           />
@@ -564,7 +569,10 @@ const Lesson = () => {
                     );
                   })}
                 </div>
-              ) : (
+              )}
+              
+              {/* Fallback to plain text if no markdown or sections */}
+              {!markdownContent && sections.length === 0 && contentText && (
                 <div className="text-lg leading-relaxed whitespace-pre-line">
                   {contentText}
                 </div>
