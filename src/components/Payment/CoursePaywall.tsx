@@ -36,7 +36,15 @@ export const CoursePaywall = ({ courseId, courseTitle, children }: CoursePaywall
       });
 
       if (result.url) {
-        window.location.href = result.url;
+        // Open in new tab for better compatibility with embedded previews
+        const newWindow = window.open(result.url, '_blank');
+        if (!newWindow) {
+          // Fallback if popup blocked
+          window.location.href = result.url;
+        }
+        setIsProcessing(false);
+      } else {
+        throw new Error('No checkout URL received');
       }
     } catch (error: any) {
       console.error('Checkout error:', error);
