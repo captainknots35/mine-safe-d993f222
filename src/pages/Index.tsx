@@ -18,9 +18,9 @@ import heroImage from "@/assets/mining-hero.jpg";
 const Index = () => {
   const { user } = useAuth();
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to courses
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/my-courses" replace />;
   }
 
   return (
