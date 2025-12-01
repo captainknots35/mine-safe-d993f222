@@ -125,7 +125,7 @@ serve(async (req) => {
         "line_items[0][price_data][currency]": "usd",
         "line_items[0][price_data][product_data][name]": course.title,
         "line_items[0][price_data][product_data][description]": course.description || "MSHA Part 46 New Miner Training",
-        "line_items[0][price_data][unit_amount]": "10800",
+        "line_items[0][price_data][unit_amount]": "200", // TESTING: $2 (normally $108)
         "line_items[0][quantity]": "1",
         mode: "payment",
         success_url: successUrl || `${origin}/dashboard?payment=success`,
@@ -154,7 +154,7 @@ serve(async (req) => {
         user_id: user.id,
         course_id: courseId,
         stripe_session_id: session.id,
-        amount_cents: 10800,
+        amount_cents: 200, // TESTING: $2 (normally $108)
         currency: "usd",
         status: "pending",
       }, { onConflict: "user_id,course_id" });
