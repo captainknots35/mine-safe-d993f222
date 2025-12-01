@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   GraduationCap, 
   Clock, 
@@ -7,6 +8,7 @@ import {
   Users,
   BookOpen
 } from "lucide-react";
+import { useMinerStats, useInstructorStats, useAdminStats } from "@/hooks/useDashboardStats";
 
 interface StatsCardProps {
   title: string;
@@ -14,9 +16,10 @@ interface StatsCardProps {
   icon: React.ReactNode;
   description?: string;
   variant?: 'default' | 'success' | 'warning' | 'primary';
+  isLoading?: boolean;
 }
 
-const StatsCard = ({ title, value, icon, description, variant = 'default' }: StatsCardProps) => {
+const StatsCard = ({ title, value, icon, description, variant = 'default', isLoading }: StatsCardProps) => {
   const getVariantStyles = () => {
     switch (variant) {
       case 'success':
@@ -41,11 +44,20 @@ const StatsCard = ({ title, value, icon, description, variant = 'default' }: Sta
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {description}
-          </p>
+        {isLoading ? (
+          <>
+            <Skeleton className="h-8 w-16 mb-1" />
+            <Skeleton className="h-4 w-24" />
+          </>
+        ) : (
+          <>
+            <div className="text-2xl font-bold">{value}</div>
+            {description && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
@@ -54,107 +66,139 @@ const StatsCard = ({ title, value, icon, description, variant = 'default' }: Sta
 
 interface DashboardStatsProps {
   userRole: 'admin' | 'instructor' | 'miner';
+  userId?: string;
 }
 
-export const DashboardStats = ({ userRole }: DashboardStatsProps) => {
-  const getMinerStats = () => [
-    {
-      title: "Completed Courses",
-      value: "3",
-      icon: <CheckCircle className="h-4 w-4" />,
-      description: "2 Part 46, 1 Part 48",
-      variant: 'success' as const
-    },
-    {
-      title: "In Progress",
-      value: "1",
-      icon: <Clock className="h-4 w-4" />,
-      description: "Part 48 Annual Refresher",
-      variant: 'primary' as const
-    },
-    {
-      title: "Training Hours",
-      value: "56",
-      icon: <GraduationCap className="h-4 w-4" />,
-      description: "Total completed hours"
-    },
-    {
-      title: "Compliance Status",
-      value: "Current",
-      icon: <CheckCircle className="h-4 w-4" />,
-      description: "All requirements met",
-      variant: 'success' as const
-    }
-  ];
+export const DashboardStats = ({ userRole, userId }: DashboardStatsProps) => {
+  const minerStats = useMinerStats(userRole === 'miner' ? userId : undefined);
+  const instructorStats = useInstructorStats(userRole === 'instructor' ? userId : undefined);
+  const adminStats = useAdminStats();
 
-  const getInstructorStats = () => [
-    {
-      title: "Active Students",
-      value: "47",
-      icon: <Users className="h-4 w-4" />,
-      description: "Across 6 courses",
-      variant: 'primary' as const
-    },
-    {
-      title: "Courses Taught",
-      value: "12",
-      icon: <BookOpen className="h-4 w-4" />,
-      description: "This quarter"
-    },
-    {
-      title: "Certifications Issued",
-      value: "89",
-      icon: <GraduationCap className="h-4 w-4" />,
-      description: "This month",
-      variant: 'success' as const
-    },
-    {
-      title: "Pending Reviews",
-      value: "5",
-      icon: <AlertTriangle className="h-4 w-4" />,
-      description: "Awaiting certification",
-      variant: 'warning' as const
-    }
-  ];
+  const getMinerStatsCards = () => {
+    const data = minerStats.data;
+    const isLoading = minerStats.isLoading;
 
-  const getAdminStats = () => [
-    {
-      title: "Total Users",
-      value: "1,247",
-      icon: <Users className="h-4 w-4" />,
-      description: "892 miners, 23 instructors",
-      variant: 'primary' as const
-    },
-    {
-      title: "Active Courses",
-      value: "28",
-      icon: <BookOpen className="h-4 w-4" />,
-      description: "Part 46 & Part 48 programs"
-    },
-    {
-      title: "Compliance Rate",
-      value: "96.2%",
-      icon: <CheckCircle className="h-4 w-4" />,
-      description: "Current training status",
-      variant: 'success' as const
-    },
-    {
-      title: "Monthly Completions",
-      value: "234",
-      icon: <GraduationCap className="h-4 w-4" />,
-      description: "Certificates issued",
-      variant: 'success' as const
-    }
-  ];
+    return [
+      {
+        title: "Completed Courses",
+        value: data?.completedCourses.toString() || "0",
+        icon: <CheckCircle className="h-4 w-4" />,
+        description: data?.completedBreakdown || "No completed courses",
+        variant: 'success' as const,
+        isLoading
+      },
+      {
+        title: "In Progress",
+        value: data?.inProgressCount.toString() || "0",
+        icon: <Clock className="h-4 w-4" />,
+        description: data?.inProgressCourse || "None",
+        variant: 'primary' as const,
+        isLoading
+      },
+      {
+        title: "Training Hours",
+        value: data?.trainingHours.toString() || "0",
+        icon: <GraduationCap className="h-4 w-4" />,
+        description: "Total completed hours",
+        isLoading
+      },
+      {
+        title: "Compliance Status",
+        value: data?.complianceStatus || "Current",
+        icon: <CheckCircle className="h-4 w-4" />,
+        description: data?.complianceDescription || "All requirements met",
+        variant: data?.complianceStatus === 'Current' ? 'success' as const : 'warning' as const,
+        isLoading
+      }
+    ];
+  };
+
+  const getInstructorStatsCards = () => {
+    const data = instructorStats.data;
+    const isLoading = instructorStats.isLoading;
+
+    return [
+      {
+        title: "Active Students",
+        value: data?.activeStudents.toString() || "0",
+        icon: <Users className="h-4 w-4" />,
+        description: data?.activeStudentsDescription || "Across 0 courses",
+        variant: 'primary' as const,
+        isLoading
+      },
+      {
+        title: "Courses Taught",
+        value: data?.coursesTaught.toString() || "0",
+        icon: <BookOpen className="h-4 w-4" />,
+        description: "Unique courses",
+        isLoading
+      },
+      {
+        title: "Certifications Issued",
+        value: data?.certificationsIssued.toString() || "0",
+        icon: <GraduationCap className="h-4 w-4" />,
+        description: "Total issued",
+        variant: 'success' as const,
+        isLoading
+      },
+      {
+        title: "Pending Reviews",
+        value: data?.pendingReviews.toString() || "0",
+        icon: <AlertTriangle className="h-4 w-4" />,
+        description: "Awaiting certification",
+        variant: 'warning' as const,
+        isLoading
+      }
+    ];
+  };
+
+  const getAdminStatsCards = () => {
+    const data = adminStats.data;
+    const isLoading = adminStats.isLoading;
+
+    return [
+      {
+        title: "Total Users",
+        value: data?.totalUsers.toLocaleString() || "0",
+        icon: <Users className="h-4 w-4" />,
+        description: data?.usersBreakdown || "0 miners, 0 instructors",
+        variant: 'primary' as const,
+        isLoading
+      },
+      {
+        title: "Active Courses",
+        value: data?.activeCourses.toString() || "0",
+        icon: <BookOpen className="h-4 w-4" />,
+        description: "Part 46 & Part 48 programs",
+        isLoading
+      },
+      {
+        title: "Compliance Rate",
+        value: data ? `${data.complianceRate}%` : "0%",
+        icon: <CheckCircle className="h-4 w-4" />,
+        description: "Current training status",
+        variant: 'success' as const,
+        isLoading
+      },
+      {
+        title: "Monthly Completions",
+        value: data?.monthlyCompletions.toString() || "0",
+        icon: <GraduationCap className="h-4 w-4" />,
+        description: "Certificates issued",
+        variant: 'success' as const,
+        isLoading
+      }
+    ];
+  };
 
   const getStats = () => {
     switch (userRole) {
       case 'admin':
-        return getAdminStats();
+        return getAdminStatsCards();
       case 'instructor':
-        return getInstructorStats();
+        return getInstructorStatsCards();
       default:
-        return getMinerStats();
+        return getMinerStatsCards();
     }
   };
 

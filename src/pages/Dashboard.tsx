@@ -151,7 +151,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Overview */}
-        <DashboardStats userRole={validUserRole} />
+        <DashboardStats userRole={validUserRole} userId={user?.id} />
 
         {/* Main Content Grid */}
         <div className="grid lg:grid-cols-3 gap-8">
