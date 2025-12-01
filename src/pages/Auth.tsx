@@ -14,7 +14,7 @@ export default function Auth() {
 
   // Redirect if already authenticated
   if (user && !loading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/my-courses" replace />;
   }
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {

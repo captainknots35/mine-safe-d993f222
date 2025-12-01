@@ -45,7 +45,7 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
           <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
             Dashboard
           </Link>
-          <Link to="/courses" className="text-sm font-medium hover:text-primary transition-colors">
+          <Link to="/my-courses" className="text-sm font-medium hover:text-primary transition-colors">
             Courses
           </Link>
           {userRole === 'admin' && (
