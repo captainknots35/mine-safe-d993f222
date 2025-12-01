@@ -12,6 +12,13 @@ serve(async (req) => {
   }
 
   try {
+    // Use service role for server-side operations (bypasses RLS)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Use anon client with user token for auth verification
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? ""
@@ -40,7 +47,7 @@ serve(async (req) => {
     }
 
     // Get course details
-    const { data: course, error: courseError } = await supabaseClient
+    const { data: course, error: courseError } = await supabaseAdmin
       .from("courses")
       .select("id, title, description")
       .eq("id", courseId)
@@ -55,7 +62,7 @@ serve(async (req) => {
     }
 
     // Check if already purchased
-    const { data: existingPurchase } = await supabaseClient
+    const { data: existingPurchase } = await supabaseAdmin
       .from("course_purchases")
       .select("id, status")
       .eq("user_id", user.id)
@@ -140,8 +147,8 @@ serve(async (req) => {
 
     console.log("Checkout session created:", session.id);
 
-    // Create pending purchase record
-    const { error: purchaseError } = await supabaseClient
+    // Create pending purchase record using admin client (bypasses RLS)
+    const { error: purchaseError } = await supabaseAdmin
       .from("course_purchases")
       .upsert({
         user_id: user.id,
