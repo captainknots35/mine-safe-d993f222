@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserEnrollments, useCourseModules } from "@/hooks/useCourses";
+import { useUserEnrollments, useCourseModules, useCourse } from "@/hooks/useCourses";
+import { useHasPurchasedCourse } from "@/hooks/useCoursePurchase";
+import { CoursePaywall } from "@/components/Payment/CoursePaywall";
 import { 
   ArrowLeft,
   Play,
@@ -27,13 +29,15 @@ const Course = () => {
   const { user, userRole, profile, loading: authLoading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
   const { data: modules, isLoading: modulesLoading } = useCourseModules(courseId);
+  const { data: courseData, isLoading: courseLoading } = useCourse(courseId);
+  const { hasPurchased, isLoading: purchaseLoading } = useHasPurchasedCourse(courseId || '');
 
-  // Auth check disabled for testing
-  // if (!authLoading && !user) {
-  //   return <Navigate to="/auth" replace />;
-  // }
+  // Redirect to auth if not logged in
+  if (!authLoading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
 
-  if (authLoading || enrollmentsLoading || modulesLoading) {
+  if (authLoading || enrollmentsLoading || modulesLoading || courseLoading || purchaseLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -41,13 +45,22 @@ const Course = () => {
     );
   }
 
-  const enrollment = enrollments?.find(e => e.course_id === courseId);
-  
-  if (!enrollment) {
-    return <Navigate to="/dashboard" replace />;
+  // Show paywall if not purchased
+  if (!hasPurchased && courseData) {
+    return (
+      <CoursePaywall 
+        courseId={courseId || ''} 
+        courseTitle={courseData.title}
+      >
+        <div />
+      </CoursePaywall>
+    );
   }
 
-  const course = enrollment.course;
+  const enrollment = enrollments?.find(e => e.course_id === courseId);
+  
+  // If no enrollment but purchased, allow access (enrollment will be created)
+  const course = enrollment?.course || courseData;
   const userName = profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User';
   const validUserRole = (userRole as 'admin' | 'instructor' | 'miner') || 'miner';
 

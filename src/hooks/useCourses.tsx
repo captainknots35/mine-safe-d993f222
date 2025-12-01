@@ -41,6 +41,25 @@ export function useCourses() {
   });
 }
 
+export function useCourse(courseId?: string) {
+  return useQuery({
+    queryKey: ['course', courseId],
+    queryFn: async () => {
+      if (!courseId) return null;
+      
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('id', courseId)
+        .single();
+      
+      if (error) throw error;
+      return data as Course;
+    },
+    enabled: !!courseId
+  });
+}
+
 export function useUserEnrollments(userId?: string) {
   return useQuery({
     queryKey: ['enrollments', userId],

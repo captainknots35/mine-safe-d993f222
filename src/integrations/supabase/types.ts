@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      course_purchases: {
+        Row: {
+          amount_cents: number
+          course_id: string
+          created_at: string | null
+          currency: string | null
+          id: string
+          purchased_at: string | null
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          course_id: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          purchased_at?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          course_id?: string
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          purchased_at?: string | null
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_purchases_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string | null
