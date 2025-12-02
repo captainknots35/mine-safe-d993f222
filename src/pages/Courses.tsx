@@ -158,7 +158,7 @@ export default function Courses() {
                 duration={course.duration_hours}
                 status="available"
                 userRole={validUserRole}
-                isComingSoon={course.type !== 'Part 46'}
+                isComingSoon={course.type !== 'Part 46' || course.title.toLowerCase().includes('refresher')}
                 onEnroll={() => handleEnroll(course.id)}
                 onContinue={() => console.log('Continue course:', course.id)}
               />
