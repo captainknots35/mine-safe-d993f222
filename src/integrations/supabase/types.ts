@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_personas: {
+        Row: {
+          avatar_url: string | null
+          bio: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          specialty: string[] | null
+          system_prompt: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          specialty?: string[] | null
+          system_prompt: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          specialty?: string[] | null
+          system_prompt?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      blog_posts: {
+        Row: {
+          author_persona_id: string | null
+          category: string
+          content_html: string
+          created_at: string | null
+          excerpt: string
+          featured_image_url: string | null
+          id: string
+          published_at: string | null
+          reading_time_minutes: number | null
+          seo_keywords: string[] | null
+          slug: string
+          status: string
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_persona_id?: string | null
+          category: string
+          content_html: string
+          created_at?: string | null
+          excerpt: string
+          featured_image_url?: string | null
+          id?: string
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          seo_keywords?: string[] | null
+          slug: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_persona_id?: string | null
+          category?: string
+          content_html?: string
+          created_at?: string | null
+          excerpt?: string
+          featured_image_url?: string | null
+          id?: string
+          published_at?: string | null
+          reading_time_minutes?: number | null
+          seo_keywords?: string[] | null
+          slug?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_author_persona_id_fkey"
+            columns: ["author_persona_id"]
+            isOneToOne: false
+            referencedRelation: "ai_personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_purchases: {
         Row: {
           amount_cents: number
@@ -140,6 +238,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      keyword_bank: {
+        Row: {
+          cluster: string
+          created_at: string | null
+          difficulty_score: number | null
+          id: string
+          is_used: boolean | null
+          keyword: string
+          last_used_at: string | null
+          search_volume: number | null
+        }
+        Insert: {
+          cluster: string
+          created_at?: string | null
+          difficulty_score?: number | null
+          id?: string
+          is_used?: boolean | null
+          keyword: string
+          last_used_at?: string | null
+          search_volume?: number | null
+        }
+        Update: {
+          cluster?: string
+          created_at?: string | null
+          difficulty_score?: number | null
+          id?: string
+          is_used?: boolean | null
+          keyword?: string
+          last_used_at?: string | null
+          search_volume?: number | null
+        }
+        Relationships: []
       }
       lessons: {
         Row: {
