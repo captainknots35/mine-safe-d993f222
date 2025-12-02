@@ -35,7 +35,7 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
         <Link to="/" className="flex items-center gap-2">
           <ShieldCheck className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-primary">MineSafe Learn</span>
+            <span className="font-bold text-lg text-primary">MineSafe</span>
             <span className="text-xs text-muted-foreground">MSHA Training Platform</span>
           </div>
         </Link>

@@ -25,7 +25,7 @@ const CoursesOverview = () => {
           <Link to="/" className="flex items-center gap-2">
             <ShieldCheck className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
-              <span className="font-bold text-lg text-primary">MineSafe Learn</span>
+              <span className="font-bold text-lg text-primary">MineSafe</span>
               <span className="text-xs text-muted-foreground">MSHA Training Platform</span>
             </div>
           </Link>
@@ -178,7 +178,7 @@ const CoursesOverview = () => {
       {/* Benefits Section */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose MineSafe Learn?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose MineSafe?</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -230,10 +230,10 @@ const CoursesOverview = () => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <Link to="/" className="flex items-center gap-2 mb-4 md:mb-0">
               <ShieldCheck className="h-6 w-6 text-primary" />
-              <span className="font-semibold">MineSafe Learn</span>
+              <span className="font-semibold">MineSafe</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              © 2024 MineSafe Learn. MSHA compliant training platform.
+              © 2024 MineSafe. MSHA compliant training platform.
             </p>
           </div>
         </div>
