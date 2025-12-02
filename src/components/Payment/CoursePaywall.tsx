@@ -87,8 +87,8 @@ export const CoursePaywall = ({ courseId, courseTitle, children }: CoursePaywall
 
           <CardContent className="space-y-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary">$2</div>
-              <p className="text-muted-foreground">One-time payment (testing price)</p>
+              <div className="text-4xl font-bold text-primary">$108</div>
+              <p className="text-muted-foreground">One-time payment</p>
             </div>
 
             <div className="grid gap-4">
@@ -139,7 +139,7 @@ export const CoursePaywall = ({ courseId, courseTitle, children }: CoursePaywall
                 </>
               ) : (
                 <>
-                  {user ? 'Purchase Course - $2' : 'Sign In to Purchase'}
+                  {user ? 'Purchase Course - $108' : 'Sign In to Purchase'}
                 </>
               )}
             </Button>
