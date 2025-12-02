@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Layout/Header';
 import { CourseCard } from '@/components/Courses/CourseCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ export default function Courses() {
   const { data: courses, isLoading } = useCourses();
   const enrollInCourse = useEnrollInCourse();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'Part 46' | 'Part 48'>('all');
 
@@ -31,6 +32,7 @@ export default function Courses() {
         title: "Enrolled successfully",
         description: "You have been enrolled in the course and can start training."
       });
+      navigate('/dashboard');
     } catch (error: any) {
       toast({
         title: "Enrollment failed",
