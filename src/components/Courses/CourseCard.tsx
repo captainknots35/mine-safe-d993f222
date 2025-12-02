@@ -21,6 +21,7 @@ interface CourseCardProps {
   status: 'available' | 'in-progress' | 'completed';
   userRole: 'admin' | 'instructor' | 'miner';
   isEnrolled?: boolean; // Add this to distinguish between available for enrollment vs enrolled but not started
+  isComingSoon?: boolean; // Indicates if course is not yet available
   onEnroll?: () => void;
   onContinue?: () => void;
   onManage?: () => void;
@@ -37,11 +38,15 @@ export const CourseCard = ({
   status,
   userRole,
   isEnrolled = false,
+  isComingSoon = false,
   onEnroll,
   onContinue,
   onManage
 }: CourseCardProps) => {
   const getStatusBadge = () => {
+    if (isComingSoon) {
+      return <Badge variant="secondary" className="bg-muted text-muted-foreground">Coming Soon</Badge>;
+    }
     switch (status) {
       case 'completed':
         return <Badge variant="secondary" className="bg-success text-success-foreground">Completed</Badge>;
@@ -64,6 +69,14 @@ export const CourseCard = ({
   };
 
   const getActionButton = () => {
+    if (isComingSoon) {
+      return (
+        <Button variant="outline" disabled className="w-full opacity-60">
+          Coming Soon
+        </Button>
+      );
+    }
+
     if (userRole === 'admin' || userRole === 'instructor') {
       return (
         <Button variant="industrial" onClick={onManage} className="w-full">
@@ -105,7 +118,7 @@ export const CourseCard = ({
   };
 
   return (
-    <Card className="h-full flex flex-col transition-all hover:shadow-lg hover:-translate-y-1">
+    <Card className={`h-full flex flex-col transition-all ${isComingSoon ? 'opacity-75' : 'hover:shadow-lg hover:-translate-y-1'}`}>
       <CardHeader>
         <div className="flex items-start justify-between gap-2 mb-2">
           {getTypeBadge()}
