@@ -34,11 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile and role
-          setTimeout(async () => {
-            await fetchUserProfile(session.user.id);
-            await fetchUserRole(session.user.id);
-          }, 0);
+          // Fetch user profile and role - wait for completion
+          await fetchUserProfile(session.user.id);
+          await fetchUserRole(session.user.id);
         } else {
           setProfile(null);
           setUserRole(null);
@@ -48,15 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserProfile(session.user.id);
-        fetchUserRole(session.user.id);
+        await fetchUserProfile(session.user.id);
+        await fetchUserRole(session.user.id);
       }
       setLoading(false);
-    });
+    };
+    
+    initSession();
 
     return () => subscription.unsubscribe();
   }, []);
