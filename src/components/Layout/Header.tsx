@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,6 +16,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface HeaderProps {
   userRole?: 'admin' | 'instructor' | 'miner';
@@ -23,10 +31,19 @@ interface HeaderProps {
 
 export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProps) => {
   const { signOut } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  const navLinks = [
+    { to: "/dashboard", label: "Dashboard", show: true },
+    { to: "/my-courses", label: "Courses", show: true },
+    { to: "/admin", label: "Administration", show: userRole === 'admin' },
+    { to: "/instructor", label: "My Classes", show: userRole === 'instructor' },
+    { to: "/certificates", label: "Certificates", show: true },
+  ];
 
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -42,25 +59,15 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
 
         {/* Navigation - Desktop */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Link to="/dashboard" className="text-sm font-medium hover:text-primary transition-colors">
-            Dashboard
-          </Link>
-          <Link to="/my-courses" className="text-sm font-medium hover:text-primary transition-colors">
-            Courses
-          </Link>
-          {userRole === 'admin' && (
-            <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
-              Administration
+          {navLinks.filter(link => link.show).map(link => (
+            <Link 
+              key={link.to}
+              to={link.to} 
+              className="text-sm font-medium hover:text-primary transition-colors"
+            >
+              {link.label}
             </Link>
-          )}
-          {userRole === 'instructor' && (
-            <Link to="/instructor" className="text-sm font-medium hover:text-primary transition-colors">
-              My Classes
-            </Link>
-          )}
-          <Link to="/certificates" className="text-sm font-medium hover:text-primary transition-colors">
-            Certificates
-          </Link>
+          ))}
         </nav>
 
         {/* User Menu */}
@@ -90,9 +97,30 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
           </DropdownMenu>
 
           {/* Mobile Menu */}
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-4 mt-6">
+                {navLinks.filter(link => link.show).map(link => (
+                  <Link 
+                    key={link.to}
+                    to={link.to} 
+                    className="text-sm font-medium hover:text-primary transition-colors py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
