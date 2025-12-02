@@ -9,8 +9,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { Loader2, HardHat, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
-  const { user, loading, signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   // Redirect if already authenticated
   if (user && !loading) {
@@ -135,7 +137,56 @@ export default function Auth() {
                       'Sign In'
                     )}
                   </Button>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="w-full text-sm"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot your password?
+                  </Button>
                 </form>
+
+                {showForgotPassword && (
+                  <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+                    <h4 className="font-medium mb-2">Reset Password</h4>
+                    <div className="space-y-2">
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={async () => {
+                            if (resetEmail) {
+                              setIsSubmitting(true);
+                              await resetPassword(resetEmail);
+                              setIsSubmitting(false);
+                              setShowForgotPassword(false);
+                              setResetEmail('');
+                            }
+                          }}
+                          disabled={isSubmitting || !resetEmail}
+                        >
+                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setShowForgotPassword(false);
+                            setResetEmail('');
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="signup">
