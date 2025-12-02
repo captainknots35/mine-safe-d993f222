@@ -24,74 +24,94 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const { toast } = useToast();
 
+  const fetchUserData = async (userId: string) => {
+    try {
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (profileData) {
+        setProfile(profileData);
+      }
+
+      // Fetch roles and prioritize admin
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (rolesData && rolesData.length > 0) {
+        const roles = rolesData.map(r => r.role);
+        if (roles.includes('admin')) {
+          setUserRole('admin');
+        } else if (roles.includes('instructor')) {
+          setUserRole('instructor');
+        } else {
+          setUserRole(roles[0]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    let mounted = true;
+    
+    // Initial session check
+    const initSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile and role - wait for completion
-          await fetchUserProfile(session.user.id);
-          await fetchUserRole(session.user.id);
+          await fetchUserData(session.user.id);
+        }
+      } catch (error) {
+        console.error('Error initializing session:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          setInitialLoadDone(true);
+        }
+      }
+    };
+
+    initSession();
+
+    // Set up auth state listener for subsequent changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted || !initialLoadDone) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchUserData(session.user.id);
         } else {
           setProfile(null);
           setUserRole(null);
         }
-        setLoading(false);
       }
     );
 
-    // Check for existing session
-    const initSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-        await fetchUserRole(session.user.id);
-      }
-      setLoading(false);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
     };
-    
-    initSession();
+  }, [initialLoadDone]);
 
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const fetchUserProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (!error) {
-      setProfile(data);
-    }
-  };
-
-  const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId);
-    
-    if (!error && data && data.length > 0) {
-      // Prioritize admin role if user has multiple roles
-      const roles = data.map(r => r.role);
-      if (roles.includes('admin')) {
-        setUserRole('admin');
-      } else if (roles.includes('instructor')) {
-        setUserRole('instructor');
-      } else {
-        setUserRole(roles[0]);
-      }
-    }
-  };
 
   const signUp = async (email: string, password: string, userData?: any) => {
     const redirectUrl = `${window.location.origin}/dashboard`;
