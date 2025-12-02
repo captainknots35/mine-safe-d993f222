@@ -40,6 +40,7 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
   const navLinks = [
     { to: "/dashboard", label: "Dashboard", show: true },
     { to: "/my-courses", label: "Courses", show: true },
+    { to: "/blog", label: "Blog", show: true },
     { to: "/admin", label: "Administration", show: userRole === 'admin' },
     { to: "/instructor", label: "My Classes", show: userRole === 'instructor' },
     { to: "/certificates", label: "Certificates", show: true },
