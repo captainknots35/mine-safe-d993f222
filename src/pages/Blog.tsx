@@ -46,7 +46,7 @@ export default function Blog() {
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://minesafetraining.com/blog" />
         <meta property="og:site_name" content="MineSafe Training" />
-        <meta property="og:image" content="https://minesafetraining.com/og-default.jpg" />
+        <meta property="og:image" content="https://minesafetraining.com/og-blog.jpg" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="627" />
         <meta property="og:image:alt" content="MineSafe Mining Safety Blog" />
@@ -54,8 +54,7 @@ export default function Blog() {
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Mining Safety Blog | MineSafe" />
-        <meta name="twitter:description" content="Expert mining safety insights, MSHA Part 46 & Part 48 compliance guides." />
-        <meta name="twitter:image" content="https://minesafetraining.com/og-default.jpg" />
+        <meta name="twitter:image" content="https://minesafetraining.com/og-blog.jpg" />
       </Helmet>
 
       <div className="min-h-screen bg-background">
