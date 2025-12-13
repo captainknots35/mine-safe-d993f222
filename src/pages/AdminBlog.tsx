@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { 
   ShieldCheck, Loader2, Plus, Trash2, Eye, Edit, 
-  RefreshCw, FileText, Clock, CheckCircle, XCircle 
+  RefreshCw, FileText, Clock, CheckCircle, XCircle, ImagePlus 
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -42,6 +42,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_COLORS: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -58,6 +59,7 @@ export default function AdminBlog() {
   const generatePost = useGenerateBlogPost();
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
 
   // Auth check
   if (authLoading) {
@@ -107,6 +109,33 @@ export default function AdminBlog() {
     }
   };
 
+  const handleBackfillImages = async () => {
+    setBackfilling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('backfill-blog-images', {
+        body: { limit: 5 }
+      });
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: 'Backfill complete!', 
+        description: `${data.successful}/${data.processed} posts updated with images` 
+      });
+      refetch();
+    } catch (error: any) {
+      toast({ 
+        title: 'Backfill failed', 
+        description: error.message || 'Failed to backfill images', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
+  const postsWithoutImages = posts?.filter(p => !p.featured_image_url).length || 0;
+
   const stats = {
     total: posts?.length || 0,
     published: posts?.filter(p => p.status === 'published').length || 0,
@@ -150,6 +179,20 @@ export default function AdminBlog() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
+            {postsWithoutImages > 0 && (
+              <Button 
+                variant="outline" 
+                onClick={handleBackfillImages} 
+                disabled={backfilling}
+              >
+                {backfilling ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-4 w-4 mr-2" />
+                )}
+                Add Images ({postsWithoutImages})
+              </Button>
+            )}
             <Button onClick={handleGeneratePost} disabled={generating}>
               {generating ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
