@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,64 @@ const CoursesOverview = () => {
   const { data: courses, isLoading } = useCourses();
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
+      <Helmet>
+        <title>MSHA Training Courses | MineSafe - Part 46 & Part 48 Programs</title>
+        <meta name="description" content="Browse MSHA Part 46 and Part 48 mining safety training courses. New miner training, annual refreshers, and site-specific hazard training available." />
+        <meta name="keywords" content="MSHA courses, Part 46 training, Part 48 training, new miner training, annual refresher, mining safety courses" />
+        <link rel="canonical" href="https://minesafetraining.com/courses" />
+        
+        {/* Open Graph */}
+        <meta property="og:title" content="MSHA Training Courses | MineSafe" />
+        <meta property="og:description" content="Browse MSHA Part 46 and Part 48 mining safety training courses with verified certification." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://minesafetraining.com/courses" />
+        <meta property="og:site_name" content="MineSafe Training" />
+        <meta property="og:image" content="https://minesafetraining.com/og-default.jpg" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="627" />
+        
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="MSHA Training Courses | MineSafe" />
+        <meta name="twitter:description" content="Part 46 and Part 48 mining safety training programs." />
+        <meta name="twitter:image" content="https://minesafetraining.com/og-default.jpg" />
+        
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "MSHA Training Courses",
+            "description": "Mining safety training programs for Part 46 and Part 48 compliance",
+            "url": "https://minesafetraining.com/courses",
+            "numberOfItems": 2,
+            "itemListElement": [
+              {
+                "@type": "Course",
+                "position": 1,
+                "name": "Part 46 New Miner Training",
+                "description": "Comprehensive training for surface mining operations",
+                "provider": {
+                  "@type": "Organization",
+                  "name": "MineSafe"
+                }
+              },
+              {
+                "@type": "Course",
+                "position": 2,
+                "name": "Part 48 Training",
+                "description": "Training for underground mining operations",
+                "provider": {
+                  "@type": "Organization",
+                  "name": "MineSafe"
+                }
+              }
+            ]
+          })}
+        </script>
+      </Helmet>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
@@ -238,7 +296,8 @@ const CoursesOverview = () => {
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 };
 
