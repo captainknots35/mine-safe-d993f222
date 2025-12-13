@@ -57,6 +57,38 @@ export default function BlogPost() {
         <meta property="article:published_time" content={post.published_at || ''} />
         <meta property="article:section" content={post.category} />
         <meta property="article:author" content={author?.name || 'MineSafe Team'} />
+        
+        {/* JSON-LD Structured Data for Blog Post */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            "headline": post.title,
+            "description": post.excerpt,
+            "image": post.featured_image_url || 'https://minesafetraining.com/og-default.jpg',
+            "datePublished": post.published_at,
+            "dateModified": post.updated_at || post.published_at,
+            "author": {
+              "@type": "Person",
+              "name": author?.name || 'MineSafe Team'
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "MineSafe",
+              "logo": {
+                "@type": "ImageObject",
+                "url": "https://minesafetraining.com/og-default.jpg"
+              }
+            },
+            "mainEntityOfPage": {
+              "@type": "WebPage",
+              "@id": `https://minesafetraining.com/blog/${post.slug}`
+            },
+            "articleSection": post.category,
+            "keywords": post.seo_keywords?.join(', ') || '',
+            "wordCount": post.content_html?.replace(/<[^>]*>/g, '').split(/\s+/).length || 0
+          })}
+        </script>
       </Helmet>
 
       <div className="min-h-screen bg-background">
