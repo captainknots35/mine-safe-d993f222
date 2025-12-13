@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.backfill-blog-images]
 verify_jwt = true
+
+[functions.sitemap]
+verify_jwt = false
