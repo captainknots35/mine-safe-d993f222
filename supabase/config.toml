@@ -14,6 +14,3 @@ verify_jwt = true
 
 [functions.backfill-blog-images]
 verify_jwt = true
-
-[functions.og-proxy]
-verify_jwt = false
