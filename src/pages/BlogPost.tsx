@@ -34,20 +34,29 @@ export default function BlogPost() {
         <title>{post.title} | MineSafe Blog</title>
         <meta name="description" content={post.excerpt} />
         <meta name="keywords" content={post.seo_keywords?.join(', ')} />
-        <link rel="canonical" href={`https://minesafe.com/blog/${post.slug}`} />
+        <link rel="canonical" href={`https://minesafetraining.com/blog/${post.slug}`} />
         
-        {/* Open Graph */}
+        {/* Open Graph - Required for LinkedIn */}
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content={`https://minesafe.com/blog/${post.slug}`} />
-        {post.featured_image_url && (
-          <meta property="og:image" content={post.featured_image_url} />
-        )}
+        <meta property="og:url" content={`https://minesafetraining.com/blog/${post.slug}`} />
+        <meta property="og:site_name" content="MineSafe Training" />
+        <meta property="og:image" content={post.featured_image_url || 'https://minesafetraining.com/og-default.jpg'} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="627" />
+        <meta property="og:image:alt" content={post.title} />
+        
+        {/* Twitter Card - Also used by LinkedIn */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={post.title} />
+        <meta name="twitter:description" content={post.excerpt} />
+        <meta name="twitter:image" content={post.featured_image_url || 'https://minesafetraining.com/og-default.jpg'} />
         
         {/* Article specific */}
         <meta property="article:published_time" content={post.published_at || ''} />
         <meta property="article:section" content={post.category} />
+        <meta property="article:author" content={author?.name || 'MineSafe Team'} />
       </Helmet>
 
       <div className="min-h-screen bg-background">
