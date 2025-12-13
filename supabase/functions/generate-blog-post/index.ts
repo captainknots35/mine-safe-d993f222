@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,6 +97,113 @@ function estimateReadingTime(html: string): number {
   const text = html.replace(/<[^>]*>/g, '');
   const words = text.split(/\s+/).length;
   return Math.max(3, Math.ceil(words / 200));
+}
+
+async function generateFeaturedImage(title: string, category: string, apiKey: string): Promise<string | null> {
+  try {
+    console.log("Generating featured image for:", title);
+    
+    const imagePrompt = `Professional mining safety training blog header image. Topic: ${title}. Style: Modern industrial photography, surface mining operation, safety equipment, workers with PPE. Color scheme: dark blue, orange safety accents, industrial tones. Wide 16:9 aspect ratio, professional quality, no text overlays. Category: ${category}.`;
+
+    const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image-preview",
+        messages: [
+          {
+            role: "user",
+            content: imagePrompt,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+
+    if (!imageResponse.ok) {
+      const errorText = await imageResponse.text();
+      console.error("Image generation failed:", errorText);
+      return null;
+    }
+
+    const imageData = await imageResponse.json();
+    const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageUrl) {
+      console.error("No image URL in response");
+      return null;
+    }
+
+    console.log("Image generated successfully");
+    return imageUrl;
+  } catch (error) {
+    console.error("Error generating image:", error);
+    return null;
+  }
+}
+
+async function uploadImageToStorage(
+  supabase: any,
+  base64DataUrl: string,
+  slug: string
+): Promise<string | null> {
+  try {
+    // Extract base64 data from data URL
+    const matches = base64DataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (!matches) {
+      console.error("Invalid base64 data URL format");
+      return null;
+    }
+
+    const imageType = matches[1];
+    const base64Data = matches[2];
+    const imageBytes = base64Decode(base64Data);
+    
+    const fileName = `blog-images/${slug}.${imageType}`;
+
+    // Check if bucket exists, create if not
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const bucketExists = buckets?.some((b: any) => b.name === 'blog-images');
+    
+    if (!bucketExists) {
+      console.log("Creating blog-images bucket...");
+      const { error: bucketError } = await supabase.storage.createBucket('blog-images', {
+        public: true,
+        fileSizeLimit: 5242880, // 5MB
+      });
+      if (bucketError) {
+        console.error("Error creating bucket:", bucketError);
+        return null;
+      }
+    }
+
+    // Upload the image
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('blog-images')
+      .upload(fileName, imageBytes, {
+        contentType: `image/${imageType}`,
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("Error uploading image:", uploadError);
+      return null;
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('blog-images')
+      .getPublicUrl(fileName);
+
+    console.log("Image uploaded successfully:", publicUrlData.publicUrl);
+    return publicUrlData.publicUrl;
+  } catch (error) {
+    console.error("Error uploading image to storage:", error);
+    return null;
+  }
 }
 
 serve(async (req) => {
@@ -282,6 +390,25 @@ Output only the polished HTML content.`,
       news: 'News',
     };
 
+    const category = categoryMap[selectedCluster] || 'Part 46';
+
+    // AGENT D: Generate featured image
+    console.log("Starting featured image generation...");
+    let featuredImageUrl: string | null = null;
+    
+    const base64Image = await generateFeaturedImage(outlineContent.title, category, LOVABLE_API_KEY);
+    
+    if (base64Image) {
+      featuredImageUrl = await uploadImageToStorage(supabase, base64Image, slug);
+    }
+    
+    if (featuredImageUrl) {
+      console.log("Featured image uploaded:", featuredImageUrl);
+    } else {
+      console.log("Using default featured image");
+      featuredImageUrl = "https://minesafetraining.com/og-default.jpg";
+    }
+
     // Insert into database
     const { data: post, error: insertError } = await supabase
       .from('blog_posts')
@@ -291,9 +418,10 @@ Output only the polished HTML content.`,
         content_html: finalContent,
         excerpt,
         seo_keywords: outlineContent.seo_keywords || [],
-        category: categoryMap[selectedCluster] || 'Part 46',
+        category,
         status: 'draft',
         reading_time_minutes: readingTime,
+        featured_image_url: featuredImageUrl,
       })
       .select()
       .single();
@@ -312,6 +440,7 @@ Output only the polished HTML content.`,
           id: post.id,
           title: post.title,
           slug: post.slug,
+          featured_image_url: post.featured_image_url,
         },
       }),
       {
