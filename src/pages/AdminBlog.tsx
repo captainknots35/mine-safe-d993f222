@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { 
   ShieldCheck, Loader2, Plus, Trash2, Eye, Edit, 
   RefreshCw, FileText, Clock, CheckCircle, XCircle, ImagePlus,
-  HardHat, Scale, TrendingUp, Newspaper
+  HardHat, Scale, TrendingUp, Newspaper, Cpu, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -64,6 +64,8 @@ const PERSONA_COLORS: Record<string, string> = {
   toolbox_talk: 'bg-orange-500/20 text-orange-700',
   compliance: 'bg-blue-500/20 text-blue-700',
   market_analysis: 'bg-purple-500/20 text-purple-700',
+  technology: 'bg-cyan-500/20 text-cyan-700',
+  emergency: 'bg-red-500/20 text-red-700',
 };
 
 export default function AdminBlog() {
@@ -285,6 +287,14 @@ export default function AdminBlog() {
                 <DropdownMenuItem onClick={() => handleGeneratePost('market')}>
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Marcus Webb (Market)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGeneratePost('technology')}>
+                  <Cpu className="h-4 w-4 mr-2" />
+                  Jake Rodriguez (Technology)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGeneratePost('emergency')}>
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  Capt. Mitchell (Emergency)
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
