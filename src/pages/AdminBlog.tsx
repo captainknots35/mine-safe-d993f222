@@ -434,9 +434,8 @@ export default function AdminBlog() {
                   <TableRow>
                     <TableHead>Title</TableHead>
                     <TableHead>Persona</TableHead>
-                    <TableHead>Category</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Confidence</TableHead>
+                    <TableHead>Accuracy</TableHead>
                     <TableHead>Views</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -444,9 +443,14 @@ export default function AdminBlog() {
                 </TableHeader>
                 <TableBody>
                   {posts?.map((post: any) => (
-                    <TableRow key={post.id}>
-                      <TableCell className="font-medium max-w-xs truncate">
-                        {post.title}
+                    <TableRow key={post.id} className={post.requires_review ? 'bg-yellow-500/5' : ''}>
+                      <TableCell className="font-medium max-w-xs">
+                        <div className="flex items-center gap-2">
+                          {post.requires_review && (
+                            <AlertTriangle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                          )}
+                          <span className="truncate">{post.title}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {post.persona_used ? (
@@ -456,9 +460,6 @@ export default function AdminBlog() {
                         ) : (
                           <span className="text-muted-foreground text-xs">-</span>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{post.category}</Badge>
                       </TableCell>
                       <TableCell>
                         <Select
@@ -481,13 +482,26 @@ export default function AdminBlog() {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        {post.confidence_score != null ? (
-                          <Badge variant={post.confidence_score >= 90 ? 'default' : 'destructive'}>
-                            {post.confidence_score}%
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">-</span>
-                        )}
+                        <div className="flex flex-col gap-1 text-xs">
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground w-8">All:</span>
+                            <Badge variant={post.confidence_score >= 85 ? 'default' : post.confidence_score >= 70 ? 'secondary' : 'destructive'} className="text-xs">
+                              {post.confidence_score ?? '-'}%
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground w-8">Reg:</span>
+                            <span className={post.regulatory_accuracy >= 85 ? 'text-green-600' : post.regulatory_accuracy >= 70 ? 'text-yellow-600' : 'text-red-600'}>
+                              {post.regulatory_accuracy ?? '-'}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-muted-foreground w-8">Safe:</span>
+                            <span className={post.safety_accuracy >= 85 ? 'text-green-600' : post.safety_accuracy >= 70 ? 'text-yellow-600' : 'text-red-600'}>
+                              {post.safety_accuracy ?? '-'}%
+                            </span>
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>{post.view_count}</TableCell>
                       <TableCell>
