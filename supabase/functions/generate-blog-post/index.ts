@@ -6,86 +6,242 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Mining industry keywords organized by cluster
-const KEYWORD_CLUSTERS = {
-  compliance: [
-    "MSHA Part 46 training requirements",
-    "Part 48 surface mining regulations",
-    "New miner training checklist",
-    "Task training documentation",
-    "Competent person designation",
-    "MSHA 5000-23 form guide",
-    "Annual refresher training requirements",
-    "Independent contractor MSHA compliance",
-    "Training plan template Part 46",
-    "Site-specific hazard training",
-  ],
-  hazard: [
-    "Highwall safety procedures",
-    "Haul road maintenance standards",
-    "Lockout tagout mining equipment",
-    "Silica dust exposure limits",
-    "Ground control mining safety",
-    "Mobile equipment blind spots",
-    "Electrical safety underground mines",
-    "Respirable dust monitoring",
-    "Slope stability assessment",
-    "Blasting safety distance requirements",
-  ],
-  news: [
-    "Latest MSHA enforcement actions",
-    "Mining industry safety statistics",
-    "New MSHA regulations 2024",
-    "Fatal mining accident analysis",
-    "MSHA inspection trends",
-    "Mining technology safety innovations",
-    "PPE standards updates mining",
-    "Mine rescue team requirements",
-    "MSHA penalty assessment changes",
-    "Autonomous mining equipment regulations",
-  ],
+// ============================================================================
+// MINING SLANG DICTIONARY - Injected into personas for authenticity
+// ============================================================================
+const MINING_SLANG = {
+  "muck": "Broken rock or ore ready for removal",
+  "rib": "The side wall of a tunnel or mine opening",
+  "scaling": "Removing loose rock from walls and ceilings",
+  "tramming": "Moving equipment or ore cars along rails",
+  "deadheading": "Running equipment empty (no load)",
+  "highwall": "The unexcavated face of exposed overburden",
+  "spoil pile": "Waste material removed during mining",
+  "bench": "A horizontal step cut into a slope",
+  "berm": "A ridge of material at the edge of a haul road",
+  "shot rock": "Rock broken by blasting",
+  "collar": "The entrance to a mine shaft",
+  "drift": "A horizontal tunnel following the ore body",
+  "adit": "A horizontal entrance to a mine",
+  "stope": "An underground excavation for ore removal",
+  "raise": "A vertical or inclined opening driven upward",
+  "winze": "A vertical opening driven downward",
+  "grizzly": "A grating over an ore pass to prevent large rocks",
+  "mucker": "A person or machine that loads broken rock",
+  "nipper": "A helper or apprentice miner",
+  "powder monkey": "A blaster or explosives handler",
+  "cat": "Caterpillar/dozer (any tracked equipment)",
+  "haul back": "The cable that returns the scraper bucket",
+  "headframe": "The structure over a shaft supporting hoisting equipment",
 };
 
-// Personas for content variety
-const PERSONAS = [
-  {
-    name: "Jack Morrison",
-    bio: "25 years in surface mining operations. Former MSHA inspector turned safety director.",
-    systemPrompt: `You are Jack Morrison, a veteran Mine Safety Director with 25 years of experience in surface mining operations. You previously worked as an MSHA inspector.
+// ============================================================================
+// PERSONA DEFINITIONS - 2000+ tokens each with detailed backstories
+// ============================================================================
+const PERSONAS = {
+  // PERSONA A: "Big Mike" - The Mine Foreman (Toolbox Talks)
+  big_mike: {
+    name: "Big Mike Kowalski",
+    bio: "35 years in the industry. Started as a mucker at the Lucky Friday mine in Idaho. Now Superintendent at a surface limestone operation in Ohio.",
+    content_type: "toolbox_talk",
+    slang_terms: ["muck", "rib", "scaling", "cat", "highwall", "berm", "shot rock", "grizzly"],
+    systemPrompt: `You are "Big Mike" Kowalski, a 35-year veteran mine superintendent. You started in 1989 as a mucker at the Lucky Friday silver mine in Idaho's Silver Valley. You've seen three fatalities in your career - each one changed you. Now you run a surface limestone operation near Zanesville, Ohio with 47 employees.
 
-TONE RULES:
-1. Direct & Authoritative: Use the imperative mood. (e.g., 'Check the hydraulic hoses' instead of 'It is suggested that you check...')
-2. No Fluff: Never use introductory filler. Start immediately with the hazard or regulation.
-3. Jargon: Use terms like 'highwall', 'spoil pile', 'muck', 'tramming', 'Lockout/Tagout', 'MSHA inspector'.
-4. Structure: Use short, punchy sentences mixed with longer technical explanations.
-5. Prohibited Phrases: NEVER use 'In the dynamic world of mining', 'delve into', 'unlocked', 'game-changer', 'In conclusion', 'It is important to note'.
+BIOGRAPHICAL DETAILS (use these for authenticity):
+- Started underground, moved to surface mining after your second kid was born
+- Lost your index finger tip on your left hand to a cable drum in '96 - you show it as a teaching moment
+- Your wife Linda was a geology tech at Hecla Mining when you met
+- You hate corporate safety slogans but respect the regulations because you've seen what happens without them
+- You drink coffee black, lots of it. You're always holding a thermos.
+- You call your crew "the boys" regardless of gender - it's affectionate, not exclusionary
+- You've been to 14 funerals for miners. You remember every name.
 
-Write from the perspective of someone who knows that safety regulations are written in blood but are also a paperwork headache for the operator. Be empathetic to the operational burden while being uncompromising on safety.`,
+VOICE ALLOWANCES:
+1. You ARE ALLOWED to use sentence fragments for emphasis. ("Check the tags. Every time. No excuses.")
+2. You ARE ALLOWED to be stern and direct about safety failures. ("That's how people die. Period.")
+3. You MUST use industry slang naturally: ${Object.entries(MINING_SLANG).slice(0, 10).map(([term, def]) => `"${term}" (${def})`).join(', ')}
+4. You ARE ALLOWED to share personal near-miss stories (invent realistic ones)
+5. You ARE ALLOWED to be skeptical of "office decisions" but firm on safety rules
+6. You ARE ALLOWED to use rhetorical questions. ("You think that highwall cares about your shift ending?")
+
+NEGATIVE CONSTRAINTS (NEVER DO THESE):
+- NEVER use words: "crucial", "paramount", "landscape", "delve", "game-changer", "synergy", "stakeholder", "paradigm shift", "leverage", "utilize"
+- NEVER start with "In today's mining industry..." or any similar generic opening
+- NEVER use passive voice for safety actions ("The guard should be checked" → "Check the guard")
+- NEVER sound like a LinkedIn post or corporate memo
+- NEVER use "In conclusion" or "To summarize"
+- NEVER use more than one exclamation point per paragraph
+
+STRUCTURE FOR TOOLBOX TALKS:
+1. THE HOOK: Start with a near-miss story or real scenario (2-3 sentences, visceral)
+2. THE HAZARD: Technical explanation of what went wrong or could go wrong
+3. THE REGS: Reference specific 30 CFR sections (Part 46 or 48)
+4. THE FIX: Practical steps - what you want the crew to do TODAY
+5. THE CLOSE: Short, punchy. Often just one line. Make it stick.
+
+SAMPLE OUTPUT STYLE:
+"Listen up. I saw a couple of you shortcutting the pre-shift on the dozers this morning. You think because it ran fine yesterday, it's fine today? That's how people get hurt. We had a rib roll in Section 4 last week that would've buried a cat if the operator wasn't paying attention. Check your fluids, check your fire suppression, and for the love of god, wear your seatbelt. The mountain doesn't care if you're 'just moving it 50 feet'."`,
   },
-  {
-    name: "Sarah Chen",
-    bio: "Mining engineer specializing in regulatory compliance. 15 years helping operations stay MSHA-ready.",
-    systemPrompt: `You are Sarah Chen, a Mining Engineer specializing in MSHA regulatory compliance with 15 years of experience helping mining operations stay compliant.
 
-TONE RULES:
-1. Technically precise but accessible: Explain complex regulations in practical terms.
-2. Solution-oriented: Always provide actionable steps operators can take.
-3. Use proper regulatory citations: Reference specific 30 CFR sections when relevant.
-4. Structure content with clear headers and bullet points for easy scanning.
-5. Prohibited Phrases: NEVER use 'In the dynamic world of mining', 'delve into', 'unlocked', 'game-changer', 'In conclusion', 'It is important to note'.
+  // PERSONA B: "The Compliance Officer" - Regulatory Deep Dives
+  compliance_officer: {
+    name: "Dr. Margaret Chen",
+    bio: "Former MSHA District Manager, now independent compliance consultant. JD/MS in Mining Engineering from Colorado School of Mines.",
+    content_type: "compliance",
+    slang_terms: [],
+    systemPrompt: `You are Dr. Margaret Chen, a former MSHA District Manager for the Rocky Mountain region (District 9), now operating as an independent compliance consultant based in Denver. You have a JD from University of Denver and MS in Mining Engineering from Colorado School of Mines.
 
-Your goal is to help operators understand what MSHA expects and how to document compliance properly. Focus on practical implementation over theory.`,
+BIOGRAPHICAL DETAILS:
+- 22 years with MSHA, rose from Inspector to District Manager
+- Left in 2021 to start Chen Compliance Group LLC
+- You've conducted over 3,000 mine inspections in your career
+- You testified before Congress twice on silica exposure regulations
+- You authored the internal MSHA training manual on Part 46 documentation
+- You are NOT anti-industry - you believe compliance protects miners AND operators
+- You've seen operators get destroyed by penalties for paperwork failures, not actual safety issues
+
+VOICE ALLOWANCES:
+1. You MUST cite specific 30 CFR sections (e.g., "Per 30 CFR § 46.5(b)")
+2. You MUST distinguish Part 46 (Surface Non-Metal) from Part 48 (Underground/Coal) - NEVER conflate them
+3. You ARE ALLOWED to use formal, legalistic structure
+4. You ARE ALLOWED to use bold warnings for compliance pitfalls
+5. You ARE ALLOWED to reference actual MSHA enforcement patterns
+6. You ARE ALLOWED to be slightly dry - you find the regulations interesting
+
+CRITICAL DISTINCTIONS YOU MUST MAINTAIN:
+- Part 46: "Competent Person" can train (operator-designated)
+- Part 48: "MSHA-Approved Instructor" required (Blue Card holder)
+- Part 46: Training plan is operator-retained (not submitted to MSHA)
+- Part 48: Training plan must be approved by MSHA District Manager
+- New PEL for Silica: 50 μg/m³ (Action Level: 25 μg/m³)
+- Coal Silica Deadline: August 18, 2025 (after 8th Circuit stay)
+- Metal/Non-Metal Silica Deadline: April 8, 2026
+
+NEGATIVE CONSTRAINTS:
+- NEVER conflate "Competent Person" (Part 46) with "Approved Instructor" (Part 48) - this is a CRITICAL FAILURE
+- NEVER give advice that could create operator liability
+- NEVER use informal slang (leave that to Big Mike)
+- NEVER speculate on future regulation changes without saying "proposed" or "pending"
+- NEVER start with "In the dynamic world of mining compliance..."
+
+STRUCTURE FOR COMPLIANCE GUIDES:
+1. REGULATORY SUMMARY: What the regulation says (exact citation)
+2. APPLICABILITY: Who this applies to (Part 46 vs 48, mine types)
+3. COMPLIANCE STEPS: Numbered, specific actions
+4. DOCUMENTATION: What records are required, retention periods
+5. COMMON VIOLATIONS: Actual citation patterns from MSHA data
+6. PENALTY EXPOSURE: What operators risk for non-compliance`,
   },
-];
 
+  // PERSONA C: "The Contrarian Analyst" - Market Analysis
+  contrarian_analyst: {
+    name: "Marcus Webb",
+    bio: "Mining engineer turned hedge fund analyst. Former Rio Tinto. Now covers mining equities for Citadel Securities.",
+    content_type: "market_analysis",
+    slang_terms: [],
+    systemPrompt: `You are Marcus Webb, a mining engineer with an MBA from Wharton who pivoted to finance. You spent 8 years at Rio Tinto in operational roles (Australia and Chile) before joining Citadel Securities as a mining sector analyst. You manage a $400M book focused on mining equities.
+
+BIOGRAPHICAL DETAILS:
+- Started as a pit geologist at Escondida copper mine in Chile
+- Your Rio Tinto experience makes you skeptical of mine management claims
+- You've visited 80+ mine sites - you know what "ramp-up issues" really means
+- You lost money on junior gold miners in 2013 and learned the hard way
+- You're Australian by birth, American by choice (citizenship 2019)
+- You think ESG is overblown but understand why it matters to capital allocation
+
+VOICE ALLOWANCES:
+1. You ARE ALLOWED to be skeptical of mainstream narratives
+2. You MUST use financial metrics: AISC (All-In Sustaining Costs), CapEx, IRR, NPV, FCF yield
+3. You ARE ALLOWED to critique "greenwashing" in mining
+4. You ARE ALLOWED to be slightly cynical about company guidance
+5. You MUST focus on "second-order effects" (e.g., high gold prices don't mean high margins if costs rise faster)
+6. You ARE ALLOWED to reference specific companies (BHP, Rio Tinto, Newmont, Barrick) as examples
+
+KEY ANALYTICAL FRAMEWORKS:
+- AISC vs Spot Price spread is what matters, not spot price alone
+- CapEx guidance is always low - add 20% minimum
+- "Labor shortages" often means "we're paying below market"
+- Autonomous haulage reduces OpEx but increases maintenance CapEx
+- Jurisdictional risk is underpriced for African assets
+- Lithium demand forecasts are based on EV adoption curves that keep slipping
+
+NEGATIVE CONSTRAINTS:
+- NEVER be a permabull or permabear - nuance is your brand
+- NEVER ignore the operational realities for financial abstractions
+- NEVER use "game-changer" or "revolutionary" without irony
+- NEVER forget that miners die when companies cut costs too aggressively
+- NEVER start with "In today's volatile market..."
+
+STRUCTURE FOR MARKET ANALYSIS:
+1. THE SETUP: What's the conventional narrative?
+2. THE TWIST: What's everyone missing? (Second-order effects)
+3. THE DATA: Specific numbers, charts, comparisons
+4. THE IMPLICATION: What should operators/investors do?
+5. THE CAVEAT: What could prove you wrong?`,
+  },
+};
+
+// ============================================================================
+// KEYWORD CLUSTERS - Now mapped to personas
+// ============================================================================
+const KEYWORD_CLUSTERS = {
+  compliance: {
+    persona: "compliance_officer",
+    keywords: [
+      "MSHA Part 46 training requirements",
+      "Part 48 surface mining regulations", 
+      "New miner training checklist",
+      "Task training documentation",
+      "Competent person designation",
+      "MSHA 5000-23 form guide",
+      "Annual refresher training requirements",
+      "Independent contractor MSHA compliance",
+      "Training plan template Part 46",
+      "Site-specific hazard training",
+      "Silica exposure compliance 2025",
+      "Part 46 vs Part 48 differences",
+    ],
+  },
+  hazard: {
+    persona: "big_mike",
+    keywords: [
+      "Highwall safety procedures",
+      "Haul road maintenance standards",
+      "Lockout tagout mining equipment",
+      "Silica dust exposure prevention",
+      "Ground control mining safety",
+      "Mobile equipment blind spots",
+      "Electrical safety underground mines",
+      "Respirable dust monitoring",
+      "Slope stability assessment",
+      "Blasting safety distance requirements",
+      "Pre-shift inspection checklist",
+      "Winter mining hazards",
+      "Heat stress prevention mining",
+    ],
+  },
+  market: {
+    persona: "contrarian_analyst",
+    keywords: [
+      "Mining industry outlook 2025",
+      "Gold mining margins analysis",
+      "Lithium supply chain disruption",
+      "Autonomous mining equipment ROI",
+      "Mining labor shortage impact",
+      "Copper demand electrification",
+      "Mining ESG reporting requirements",
+      "Rare earth mining investment",
+      "Mining technology adoption trends",
+      "Resource nationalism mining risk",
+    ],
+  },
+};
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
 function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/--+/g, '-')
-    .trim()
-    .substring(0, 60);
+  return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/--+/g, '-').trim().substring(0, 60);
 }
 
 function selectRandomItem<T>(array: T[]): T {
@@ -100,49 +256,43 @@ function estimateReadingTime(html: string): number {
 
 async function getRandomExistingImage(supabase: any): Promise<string | null> {
   try {
-    console.log("Fetching existing images from storage...");
-    
-    // List all files in the blog-images bucket
-    const { data: files, error: listError } = await supabase.storage
-      .from('blog-images')
-      .list('', { limit: 100 });
-    
-    if (listError) {
-      console.error("Error listing images:", listError);
-      return null;
-    }
-    
-    if (!files || files.length === 0) {
-      console.log("No existing images found");
-      return null;
-    }
-    
-    // Filter to only image files
-    const imageFiles = files.filter((f: any) => 
-      f.name && (f.name.endsWith('.png') || f.name.endsWith('.jpg') || f.name.endsWith('.jpeg') || f.name.endsWith('.webp'))
-    );
-    
-    if (imageFiles.length === 0) {
-      console.log("No image files found in bucket");
-      return null;
-    }
-    
-    // Select a random image
+    const { data: files, error } = await supabase.storage.from('blog-images').list('', { limit: 100 });
+    if (error || !files?.length) return null;
+    const imageFiles = files.filter((f: any) => f.name && /\.(png|jpg|jpeg|webp)$/.test(f.name));
+    if (!imageFiles.length) return null;
     const randomImage = selectRandomItem(imageFiles);
-    
-    // Get public URL
-    const { data: publicUrlData } = supabase.storage
-      .from('blog-images')
-      .getPublicUrl(randomImage.name);
-    
-    console.log("Selected existing image:", publicUrlData.publicUrl);
-    return publicUrlData.publicUrl;
-  } catch (error) {
-    console.error("Error getting random image:", error);
-    return null;
-  }
+    const { data } = supabase.storage.from('blog-images').getPublicUrl(randomImage.name);
+    return data.publicUrl;
+  } catch { return null; }
 }
 
+async function generateEmbedding(text: string, apiKey: string): Promise<number[] | null> {
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "text-embedding-3-small", input: text.substring(0, 8000) }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.data?.[0]?.embedding || null;
+  } catch { return null; }
+}
+
+async function checkRedundancy(supabase: any, embedding: number[]): Promise<{ isRedundant: boolean; similarPost?: string }> {
+  try {
+    const { data, error } = await supabase.rpc('check_blog_redundancy', {
+      topic_embedding: `[${embedding.join(',')}]`,
+      days_back: 30,
+    });
+    if (error || !data?.length) return { isRedundant: false };
+    return { isRedundant: true, similarPost: data[0].title };
+  } catch { return { isRedundant: false }; }
+}
+
+// ============================================================================
+// MAIN HANDLER
+// ============================================================================
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -153,126 +303,140 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Select random cluster and keyword
-    const clusters = Object.keys(KEYWORD_CLUSTERS) as Array<keyof typeof KEYWORD_CLUSTERS>;
-    const selectedCluster = selectRandomItem(clusters);
-    const selectedKeyword = selectRandomItem(KEYWORD_CLUSTERS[selectedCluster]);
-    const selectedPersona = selectRandomItem(PERSONAS);
+    // Select cluster and persona
+    const clusterKeys = Object.keys(KEYWORD_CLUSTERS) as Array<keyof typeof KEYWORD_CLUSTERS>;
+    const selectedClusterKey = selectRandomItem(clusterKeys);
+    const selectedCluster = KEYWORD_CLUSTERS[selectedClusterKey];
+    const selectedKeyword = selectRandomItem(selectedCluster.keywords);
+    const persona = PERSONAS[selectedCluster.persona as keyof typeof PERSONAS];
 
-    console.log(`Generating post for keyword: "${selectedKeyword}" in cluster: ${selectedCluster}`);
+    console.log(`=== BLOG GENERATION START ===`);
+    console.log(`Cluster: ${selectedClusterKey}`);
+    console.log(`Keyword: "${selectedKeyword}"`);
+    console.log(`Persona: ${persona.name} (${persona.content_type})`);
 
-    // AGENT A: The Strategist - Generate outline
+    // Fetch relevant research materials for RAG injection
+    let ragContext = "";
+    const { data: researchMaterials } = await supabase
+      .from('research_materials')
+      .select('raw_content, summary, source_type')
+      .order('ingested_at', { ascending: false })
+      .limit(3);
+    
+    if (researchMaterials?.length) {
+      ragContext = "\n\n[RECENT INDUSTRY DATA - Use these facts if relevant]\n" + 
+        researchMaterials.map(r => `- ${r.source_type}: ${r.summary || r.raw_content.substring(0, 500)}`).join('\n');
+      console.log(`Injected ${researchMaterials.length} research materials for RAG`);
+    }
+
+    // AGENT A: The Strategist
+    console.log("Agent A: Strategist generating outline...");
     const outlineResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
           {
             role: "system",
-            content: `You are a content strategist for mining safety content. Create detailed article outlines targeting mine operators and safety managers.
+            content: `You are a content strategist for mining safety content. Your job is to create article outlines targeting mine operators and safety managers.
 
-Generate a unique angle for the topic that hasn't been overdone. Focus on:
+You MUST generate a UNIQUE angle that hasn't been covered before. Consider:
 - Specific regulatory requirements (30 CFR citations)
-- Real operational challenges
-- Practical implementation steps
+- Real operational challenges faced by small/medium operators
+- Recent industry events or regulatory changes
+- Practical implementation steps operators can take TODAY
 
 Output a JSON object with:
-- title: SEO-optimized title (50-60 chars)
-- angle: The unique perspective (1-2 sentences)
-- outline: Array of H2 sections, each with H3 subsections
-- seo_keywords: Array of 5-8 related keywords`,
+- title: SEO-optimized title (50-60 chars, no generic phrases)
+- angle: The unique perspective or hook (1-2 sentences)
+- outline: Array of 4-5 H2 sections, each with 2-3 H3 subsections
+- seo_keywords: Array of 5-8 related long-tail keywords
+- content_type: "${persona.content_type}"
+- target_word_count: ${persona.content_type === 'toolbox_talk' ? '800-1000' : '1200-1500'}`,
           },
           {
             role: "user",
-            content: `Create an article outline for the topic: "${selectedKeyword}"
-
-Make it practical and actionable for mine operators. The target audience is safety managers at small to medium surface mining operations.`,
+            content: `Create an article outline for: "${selectedKeyword}"\n\nTarget audience: ${persona.content_type === 'toolbox_talk' ? 'Blue-collar workforce, foremen, safety trainers' : persona.content_type === 'compliance' ? 'Safety Directors, Legal Counsel, Mine Operators' : 'Investors, C-Suite, Industry Watchers'}${ragContext}`,
           },
         ],
         response_format: { type: "json_object" },
       }),
     });
 
-    if (!outlineResponse.ok) {
-      const errorText = await outlineResponse.text();
-      console.error("Outline generation failed:", errorText);
-      throw new Error(`Outline generation failed: ${outlineResponse.status}`);
+    if (!outlineResponse.ok) throw new Error(`Strategist failed: ${outlineResponse.status}`);
+    const outlineData = await outlineResponse.json();
+    const outline = JSON.parse(outlineData.choices[0].message.content);
+    console.log(`Outline generated: "${outline.title}"`);
+
+    // REDUNDANCY CHECK via embedding
+    console.log("Checking for redundant content...");
+    const topicEmbedding = await generateEmbedding(`${outline.title} ${outline.angle}`, LOVABLE_API_KEY);
+    
+    if (topicEmbedding) {
+      const { isRedundant, similarPost } = await checkRedundancy(supabase, topicEmbedding);
+      if (isRedundant) {
+        console.log(`REDUNDANCY DETECTED! Similar to: "${similarPost}"`);
+        // In production, we'd retry with a different topic. For now, log and continue.
+        console.log("Proceeding anyway (redundancy check is advisory)");
+      }
     }
 
-    const outlineData = await outlineResponse.json();
-    const outlineContent = JSON.parse(outlineData.choices[0].message.content);
-    
-    console.log("Generated outline:", outlineContent.title);
+    // AGENT B: The Writer (with persona injection)
+    console.log(`Agent B: Writer generating content as ${persona.name}...`);
+    const slangInjection = persona.slang_terms.length > 0 
+      ? `\n\nMINING SLANG DICTIONARY - Integrate at least 3 terms naturally:\n${persona.slang_terms.map(term => `- "${term}": ${MINING_SLANG[term as keyof typeof MINING_SLANG]}`).join('\n')}`
+      : '';
 
-    // AGENT B: The Writer - Generate content
     const writerResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          {
-            role: "system",
-            content: selectedPersona.systemPrompt,
-          },
+          { role: "system", content: persona.systemPrompt + slangInjection },
           {
             role: "user",
-            content: `Write a comprehensive blog article based on this outline:
+            content: `Write a ${outline.target_word_count || '1200-1500'} word blog article based on this outline:
 
-Title: ${outlineContent.title}
-Angle: ${outlineContent.angle}
-Outline: ${JSON.stringify(outlineContent.outline)}
+Title: ${outline.title}
+Angle: ${outline.angle}
+Outline: ${JSON.stringify(outline.outline)}
+Content Type: ${persona.content_type}
 
 Requirements:
-- Write 1200-1500 words
 - Use semantic HTML (h2, h3, p, ul, li, strong, blockquote)
 - Include specific 30 CFR regulatory citations where relevant
 - Add one "safety-alert" div for critical warnings: <div class="safety-alert">Warning content</div>
 - Add one "tip-box" div for practical tips: <div class="tip-box">Tip content</div>
-- NO introduction paragraphs - start directly with useful content
-- Include 2-3 real-world examples of equipment failures or safety incidents
-- End with actionable next steps, not a generic conclusion
+- NO generic introductions - start directly with value
+- Include 2-3 specific examples (real scenarios, equipment types, incidents)
+- End with actionable next steps, NOT "In conclusion"
+${persona.content_type === 'toolbox_talk' ? '- Keep it punchy - miners scan, they don\'t read novels' : ''}
+${persona.content_type === 'compliance' ? '- Include specific section citations for all regulations mentioned' : ''}
+${persona.content_type === 'market_analysis' ? '- Include specific financial metrics and company examples' : ''}
+${ragContext}
 
-Output only the HTML content, no markdown code blocks.`,
+Output only HTML content, no markdown code blocks.`,
           },
         ],
       }),
     });
 
-    if (!writerResponse.ok) {
-      const errorText = await writerResponse.text();
-      console.error("Writer generation failed:", errorText);
-      throw new Error(`Writer generation failed: ${writerResponse.status}`);
-    }
-
+    if (!writerResponse.ok) throw new Error(`Writer failed: ${writerResponse.status}`);
     const writerData = await writerResponse.json();
-    let rawContent = writerData.choices[0].message.content;
-    
-    // Clean up any markdown artifacts
-    rawContent = rawContent.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+    let rawContent = writerData.choices[0].message.content.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+    console.log(`Content generated: ${rawContent.length} chars`);
 
-    console.log("Generated content length:", rawContent.length);
-
-    // AGENT C: The Editor - Humanize and polish
+    // AGENT C: The Editor (humanize)
+    console.log("Agent C: Editor humanizing content...");
     const editorResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
@@ -281,86 +445,127 @@ Output only the HTML content, no markdown code blocks.`,
             content: `You are an editor who humanizes AI-generated content for mining industry professionals.
 
 Your task:
-1. Increase sentence variety (mix short punchy sentences with longer explanations)
-2. Remove any AI-sounding phrases: "In conclusion", "It is important to note", "In the dynamic world", "delve into", "unlocked", "game-changer", "crucial", "landscape"
-3. Add more specific operational details and numbers where appropriate
-4. Ensure the tone is direct, authoritative, and slightly gritty
+1. Increase sentence variety (mix short punchy with longer explanations)
+2. REMOVE these AI-sounding phrases: "In conclusion", "It is important to note", "In the dynamic world", "delve", "unlock", "game-changer", "crucial", "landscape", "navigate", "leverage", "utilize", "paramount", "synergy"
+3. Add specific operational details and numbers where appropriate
+4. Ensure the tone matches the persona: ${persona.name}
 5. Keep all HTML structure intact
 6. Fix any formatting issues
 
 Output only the polished HTML content.`,
           },
-          {
-            role: "user",
-            content: `Edit and humanize this mining safety article:\n\n${rawContent}`,
-          },
+          { role: "user", content: `Edit and humanize:\n\n${rawContent}` },
         ],
       }),
     });
 
-    if (!editorResponse.ok) {
-      const errorText = await editorResponse.text();
-      console.error("Editor generation failed:", errorText);
-      throw new Error(`Editor generation failed: ${editorResponse.status}`);
+    if (!editorResponse.ok) throw new Error(`Editor failed: ${editorResponse.status}`);
+    const editorData = await editorResponse.json();
+    let editedContent = editorData.choices[0].message.content.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+
+    // AGENT D: The Auditor (hallucination control)
+    console.log("Agent D: Auditor validating content...");
+    const auditorResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are an MSHA compliance auditor. Your job is to validate mining safety content for accuracy and safety.
+
+CRITICAL CHECKS:
+1. If it claims a specific 30 CFR regulation exists, verify it's a real section (e.g., 30 CFR § 46.5 is real)
+2. If it conflates Part 46 (Competent Person) with Part 48 (Approved Instructor), that's a CRITICAL ERROR
+3. If it gives advice that could be unsafe (e.g., "skip pre-shift if you're late"), flag it
+4. Check that silica PEL values are correct (50 μg/m³ is the new PEL)
+5. Verify deadline dates are plausible (Coal Silica: Aug 2025, M/NM: April 2026)
+
+Output JSON with:
+- confidence_score: 0-100 (100 = no issues found)
+- issues: Array of issues found (empty if none)
+- corrected_content: The HTML with any factual corrections applied (or same content if no corrections needed)`,
+          },
+          { role: "user", content: `Audit this mining safety article:\n\n${editedContent}` },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    let finalContent = editedContent;
+    let confidenceScore = 100;
+
+    if (auditorResponse.ok) {
+      try {
+        const auditorData = await auditorResponse.json();
+        const audit = JSON.parse(auditorData.choices[0].message.content);
+        confidenceScore = audit.confidence_score || 100;
+        if (audit.issues?.length) {
+          console.log(`Auditor found ${audit.issues.length} issues:`, audit.issues);
+        }
+        if (audit.corrected_content) {
+          finalContent = audit.corrected_content.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+        }
+        console.log(`Auditor confidence score: ${confidenceScore}`);
+      } catch (e) {
+        console.log("Auditor response parsing failed, using edited content");
+      }
     }
 
-    const editorData = await editorResponse.json();
-    let finalContent = editorData.choices[0].message.content;
-    
-    // Clean up any markdown artifacts
-    finalContent = finalContent.replace(/```html\n?/g, '').replace(/```\n?/g, '');
-
-    // Generate excerpt
+    // Generate final data
     const plainText = finalContent.replace(/<[^>]*>/g, '');
     const excerpt = plainText.substring(0, 155).trim() + '...';
-
-    // Create slug
-    const slug = slugify(outlineContent.title) + '-' + Date.now().toString(36);
-
-    // Calculate reading time
+    const slug = slugify(outline.title) + '-' + Date.now().toString(36);
     const readingTime = estimateReadingTime(finalContent);
 
-    // Map category
     const categoryMap: Record<string, string> = {
       compliance: 'Part 46',
       hazard: 'Safety Alerts',
-      news: 'News',
+      market: 'Industry Trends',
     };
 
-    const category = categoryMap[selectedCluster] || 'Part 46';
+    const featuredImageUrl = await getRandomExistingImage(supabase) || "https://minesafetraining.com/og-default.jpg";
 
-    // Select random existing image (cycling through existing images instead of generating new ones)
-    console.log("Selecting random existing featured image...");
-    let featuredImageUrl = await getRandomExistingImage(supabase);
-    
-    if (!featuredImageUrl) {
-      console.log("No existing images found, using default");
-      featuredImageUrl = "https://minesafetraining.com/og-default.jpg";
+    // Generate embedding for the final content
+    const contentEmbedding = await generateEmbedding(`${outline.title} ${excerpt}`, LOVABLE_API_KEY);
+
+    // Determine status based on confidence score
+    const status = confidenceScore >= 90 ? 'published' : 'draft';
+    if (status === 'draft') {
+      console.log(`Low confidence (${confidenceScore}) - saving as draft for review`);
     }
 
     // Insert into database
     const { data: post, error: insertError } = await supabase
       .from('blog_posts')
       .insert({
-        title: outlineContent.title,
+        title: outline.title,
         slug,
         content_html: finalContent,
         excerpt,
-        seo_keywords: outlineContent.seo_keywords || [],
-        category,
-        status: 'draft',
+        seo_keywords: outline.seo_keywords || [],
+        category: categoryMap[selectedClusterKey] || 'Part 46',
+        status,
         reading_time_minutes: readingTime,
         featured_image_url: featuredImageUrl,
+        confidence_score: confidenceScore,
+        persona_used: persona.name,
+        content_type: persona.content_type,
+        embedding: contentEmbedding ? `[${contentEmbedding.join(',')}]` : null,
+        published_at: status === 'published' ? new Date().toISOString() : null,
       })
       .select()
       .single();
 
-    if (insertError) {
-      console.error("Database insert error:", insertError);
-      throw new Error(`Failed to save post: ${insertError.message}`);
-    }
+    if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
 
-    console.log("Post created successfully:", post.id);
+    console.log(`=== BLOG GENERATION COMPLETE ===`);
+    console.log(`Post ID: ${post.id}`);
+    console.log(`Title: ${post.title}`);
+    console.log(`Persona: ${persona.name}`);
+    console.log(`Confidence: ${confidenceScore}`);
+    console.log(`Status: ${status}`);
 
     return new Response(
       JSON.stringify({
@@ -369,34 +574,27 @@ Output only the polished HTML content.`,
           id: post.id,
           title: post.title,
           slug: post.slug,
-          featured_image_url: post.featured_image_url,
+          persona: persona.name,
+          content_type: persona.content_type,
+          confidence_score: confidenceScore,
+          status,
         },
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error generating blog post:", error);
     
-    // Handle rate limits
     if (error.message?.includes('429')) {
-      return new Response(
-        JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    
     if (error.message?.includes('402')) {
-      return new Response(
-        JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits to continue." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    return new Response(
-      JSON.stringify({ error: error.message || "Failed to generate blog post" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: error.message || "Failed to generate blog post" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

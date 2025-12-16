@@ -54,11 +54,15 @@ export type Database = {
         Row: {
           author_persona_id: string | null
           category: string
+          confidence_score: number | null
           content_html: string
+          content_type: string | null
           created_at: string | null
+          embedding: string | null
           excerpt: string
           featured_image_url: string | null
           id: string
+          persona_used: string | null
           published_at: string | null
           reading_time_minutes: number | null
           seo_keywords: string[] | null
@@ -71,11 +75,15 @@ export type Database = {
         Insert: {
           author_persona_id?: string | null
           category: string
+          confidence_score?: number | null
           content_html: string
+          content_type?: string | null
           created_at?: string | null
+          embedding?: string | null
           excerpt: string
           featured_image_url?: string | null
           id?: string
+          persona_used?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
           seo_keywords?: string[] | null
@@ -88,11 +96,15 @@ export type Database = {
         Update: {
           author_persona_id?: string | null
           category?: string
+          confidence_score?: number | null
           content_html?: string
+          content_type?: string | null
           created_at?: string | null
+          embedding?: string | null
           excerpt?: string
           featured_image_url?: string | null
           id?: string
+          persona_used?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
           seo_keywords?: string[] | null
@@ -235,6 +247,62 @@ export type Database = {
             columns: ["course_id"]
             isOneToOne: false
             referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      federal_register_docs: {
+        Row: {
+          abstract: string | null
+          citation: string | null
+          created_at: string
+          document_number: string
+          document_type: string | null
+          effective_date: string | null
+          html_url: string | null
+          id: string
+          is_processed: boolean | null
+          pdf_url: string | null
+          publication_date: string
+          title: string
+          triggered_blog_id: string | null
+        }
+        Insert: {
+          abstract?: string | null
+          citation?: string | null
+          created_at?: string
+          document_number: string
+          document_type?: string | null
+          effective_date?: string | null
+          html_url?: string | null
+          id?: string
+          is_processed?: boolean | null
+          pdf_url?: string | null
+          publication_date: string
+          title: string
+          triggered_blog_id?: string | null
+        }
+        Update: {
+          abstract?: string | null
+          citation?: string | null
+          created_at?: string
+          document_number?: string
+          document_type?: string | null
+          effective_date?: string | null
+          html_url?: string | null
+          id?: string
+          is_processed?: boolean | null
+          pdf_url?: string | null
+          publication_date?: string
+          title?: string
+          triggered_blog_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "federal_register_docs_triggered_blog_id_fkey"
+            columns: ["triggered_blog_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -572,6 +640,45 @@ export type Database = {
           },
         ]
       }
+      research_materials: {
+        Row: {
+          created_at: string
+          embedding: string | null
+          id: string
+          ingested_at: string
+          is_processed: boolean | null
+          metadata: Json | null
+          raw_content: string
+          source_id: string | null
+          source_type: string
+          summary: string | null
+        }
+        Insert: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          ingested_at?: string
+          is_processed?: boolean | null
+          metadata?: Json | null
+          raw_content: string
+          source_id?: string | null
+          source_type: string
+          summary?: string | null
+        }
+        Update: {
+          created_at?: string
+          embedding?: string | null
+          id?: string
+          ingested_at?: string
+          is_processed?: boolean | null
+          metadata?: Json | null
+          raw_content?: string
+          source_id?: string | null
+          source_type?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       training_certificates: {
         Row: {
           certificate_number: string
@@ -655,6 +762,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_blog_redundancy: {
+        Args: { days_back?: number; topic_embedding: string }
+        Returns: {
+          post_id: string
+          similarity: number
+          title: string
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
