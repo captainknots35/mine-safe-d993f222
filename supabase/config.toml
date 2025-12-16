@@ -12,8 +12,5 @@ verify_jwt = false
 [functions.generate-blog-post]
 verify_jwt = true
 
-[functions.backfill-blog-images]
-verify_jwt = true
-
 [functions.sitemap]
 verify_jwt = false
