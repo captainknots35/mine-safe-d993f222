@@ -114,9 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const signUp = async (email: string, password: string, userData?: any) => {
-    const redirectUrl = `${window.location.origin}/dashboard`;
+    const redirectUrl = `${window.location.origin}/my-courses`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -126,16 +126,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     
     if (error) {
+      // Provide user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message.includes('already registered')) {
+        errorMessage = "This email is already registered. Please sign in instead.";
+      } else if (error.message.includes('valid email')) {
+        errorMessage = "Please enter a valid email address.";
+      } else if (error.message.includes('password')) {
+        errorMessage = "Password must be at least 6 characters long.";
+      }
+      
       toast({
         title: "Sign up failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Check your email",
-        description: "We've sent you a confirmation link to complete your registration."
-      });
+    } else if (data?.user) {
+      // Check if email confirmation is required
+      if (data.user.identities && data.user.identities.length === 0) {
+        // User already exists
+        toast({
+          title: "Account exists",
+          description: "This email is already registered. Please sign in instead.",
+          variant: "destructive"
+        });
+      } else if (data.session) {
+        // User is immediately logged in (email confirmation disabled)
+        toast({
+          title: "Welcome to MineSafe!",
+          description: "Your account has been created successfully."
+        });
+      } else {
+        // Email confirmation is enabled
+        toast({
+          title: "Almost there!",
+          description: "Please check your email and click the confirmation link to activate your account."
+        });
+      }
     }
     
     return { error };

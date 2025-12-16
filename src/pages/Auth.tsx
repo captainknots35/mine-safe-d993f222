@@ -397,9 +397,13 @@ export default function Auth() {
                       id="signup-password"
                       name="password"
                       type="password"
-                      placeholder="Choose a strong password"
+                      placeholder="Min. 6 characters"
                       required
+                      minLength={6}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Must be at least 6 characters
+                    </p>
                   </div>
                   
                   <Button 
