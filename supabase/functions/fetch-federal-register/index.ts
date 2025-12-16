@@ -111,14 +111,53 @@ serve(async (req) => {
         console.error(`Error inserting research material:`, researchError);
       }
 
-      // If it's a Final Rule or Proposed Rule, it's blog-worthy
+      // If it's a Final Rule or Proposed Rule, trigger blog generation
       if (doc.type === 'Rule' || doc.type === 'Proposed Rule') {
         triggeredBlogs++;
-        console.log(`Document ${doc.document_number} is a ${doc.type} - marked for blog generation`);
+        console.log(`Document ${doc.document_number} is a ${doc.type} - triggering Regulatory Alert blog`);
+        
+        // Trigger blog generation with compliance cluster and regulatory context
+        try {
+          const blogResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-blog-post`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_ANON_KEY')}`,
+            },
+            body: JSON.stringify({
+              cluster: 'compliance',
+              regulatory_alert: {
+                document_number: doc.document_number,
+                title: doc.title,
+                abstract: doc.abstract,
+                type: doc.type,
+                effective_date: doc.effective_on,
+                citation: doc.citation,
+              }
+            }),
+          });
+          
+          if (blogResponse.ok) {
+            const blogResult = await blogResponse.json();
+            console.log(`Regulatory Alert blog triggered successfully:`, blogResult.post?.title);
+            
+            // Update federal_register_docs with triggered blog ID
+            if (blogResult.post?.id) {
+              await supabase
+                .from('federal_register_docs')
+                .update({ triggered_blog_id: blogResult.post.id, is_processed: true })
+                .eq('document_number', doc.document_number);
+            }
+          } else {
+            console.error(`Failed to trigger blog for ${doc.document_number}:`, await blogResponse.text());
+          }
+        } catch (blogError) {
+          console.error(`Error triggering blog for ${doc.document_number}:`, blogError);
+        }
       }
     }
 
-    console.log(`Fetch complete. New docs: ${newDocsCount}, Potential blogs: ${triggeredBlogs}`);
+    console.log(`Fetch complete. New docs: ${newDocsCount}, Triggered blogs: ${triggeredBlogs}`);
 
     return new Response(
       JSON.stringify({
