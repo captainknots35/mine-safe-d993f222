@@ -70,8 +70,36 @@ export default function AdminBlog() {
     );
   }
 
-  if (!user || userRole !== 'admin') {
+  if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (userRole !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <ShieldCheck className="h-6 w-6" />
+              Access Denied
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              You don't have permission to access the blog admin panel. This area is restricted to administrators only.
+            </p>
+            <div className="flex gap-2">
+              <Button asChild>
+                <Link to="/my-courses">Go to My Courses</Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link to="/blog">View Blog</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   const handleStatusChange = async (postId: string, status: string) => {
