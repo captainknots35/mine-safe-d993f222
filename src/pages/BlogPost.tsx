@@ -21,14 +21,14 @@ function generateJsonLd(post: any, author: any) {
     "mainEntityOfPage": { "@type": "WebPage", "@id": `https://minesafetraining.com/blog/${post.slug}` },
   };
 
-  // Toolbox Talks → HowTo schema
-  if (post.content_type === 'toolbox_talk' || post.category === 'Safety Alerts') {
+  // Toolbox Talks & Emergency → HowTo schema (both are procedural)
+  if (post.content_type === 'toolbox_talk' || post.content_type === 'emergency' || post.category === 'Safety Alerts') {
     const steps = extractStepsFromContent(post.content_html);
     return { ...baseSchema, "@type": "HowTo", "name": post.title, "step": steps, "totalTime": `PT${post.reading_time_minutes}M` };
   }
 
-  // Market Analysis / News → NewsArticle schema
-  if (post.content_type === 'market_analysis' || post.category === 'Industry Trends' || post.category === 'News') {
+  // Market Analysis / News / Technology → NewsArticle schema
+  if (post.content_type === 'market_analysis' || post.content_type === 'technology' || post.category === 'Industry Trends' || post.category === 'News' || post.category === 'Technology') {
     return { ...baseSchema, "@type": "NewsArticle", "articleSection": post.category, "keywords": post.seo_keywords?.join(', ') || '' };
   }
 
