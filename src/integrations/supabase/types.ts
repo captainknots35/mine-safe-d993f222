@@ -65,6 +65,9 @@ export type Database = {
           persona_used: string | null
           published_at: string | null
           reading_time_minutes: number | null
+          regulatory_accuracy: number | null
+          requires_review: boolean | null
+          safety_accuracy: number | null
           seo_keywords: string[] | null
           slug: string
           status: string
@@ -86,6 +89,9 @@ export type Database = {
           persona_used?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
+          regulatory_accuracy?: number | null
+          requires_review?: boolean | null
+          safety_accuracy?: number | null
           seo_keywords?: string[] | null
           slug: string
           status?: string
@@ -107,6 +113,9 @@ export type Database = {
           persona_used?: string | null
           published_at?: string | null
           reading_time_minutes?: number | null
+          regulatory_accuracy?: number | null
+          requires_review?: boolean | null
+          safety_accuracy?: number | null
           seo_keywords?: string[] | null
           slug?: string
           status?: string
