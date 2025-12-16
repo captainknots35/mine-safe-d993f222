@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate, Link, useSearchParams } from 'react-router-dom';
+import { Navigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,15 +20,28 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+
+  const getRecoveryParams = () => {
+    const searchType = searchParams.get('type');
+    const searchAccessToken = searchParams.get('access_token');
+
+    const hashParams = new URLSearchParams((location.hash || '').replace(/^#/, ''));
+    const hashType = hashParams.get('type');
+    const hashAccessToken = hashParams.get('access_token');
+
+    return {
+      type: searchType ?? hashType,
+      accessToken: searchAccessToken ?? hashAccessToken,
+    };
+  };
 
   // Check for password recovery mode from URL or auth event
   useEffect(() => {
-    // Check URL for recovery tokens
-    const type = searchParams.get('type');
-    const accessToken = searchParams.get('access_token');
-    const refreshToken = searchParams.get('refresh_token');
-    
-    if (type === 'recovery' || accessToken) {
+    const { type, accessToken } = getRecoveryParams();
+
+    // Supabase recovery links typically use the URL hash (#access_token=...)
+    if (type === 'recovery' || !!accessToken) {
       setIsRecoveryMode(true);
     }
 
@@ -40,7 +53,8 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [searchParams]);
+    // location.hash changes when Supabase redirects back with tokens
+  }, [searchParams, location.hash]);
 
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
