@@ -1,13 +1,44 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Eye } from 'lucide-react';
 import { BlogPost } from '@/types/blog';
 import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface BlogCardProps {
   post: BlogPost;
   featured?: boolean;
+}
+
+function LazyImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className={`bg-gradient-to-br from-primary/10 to-muted flex items-center justify-center ${className}`}>
+        <span className="text-4xl opacity-30">⛏️</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative ${className}`}>
+      {!loaded && (
+        <Skeleton className="absolute inset-0 w-full h-full" />
+      )}
+      <img 
+        src={src} 
+        alt={alt}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+      />
+    </div>
+  );
 }
 
 export function BlogCard({ post, featured = false }: BlogCardProps) {
@@ -21,10 +52,10 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
         <Card className="overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-background to-muted hover:shadow-xl transition-all duration-300">
           <div className="relative h-64 md:h-80 overflow-hidden">
             {post.featured_image_url ? (
-              <img 
+              <LazyImage 
                 src={post.featured_image_url} 
                 alt={post.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
@@ -64,17 +95,17 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
       <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-primary/50">
         <div className="relative h-48 overflow-hidden">
           {post.featured_image_url ? (
-            <img 
+            <LazyImage 
               src={post.featured_image_url} 
               alt={post.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-muted flex items-center justify-center">
               <span className="text-4xl opacity-30">⛏️</span>
             </div>
           )}
-          <Badge className="absolute top-3 left-3" variant="secondary">
+          <Badge className="absolute top-3 left-3 z-10" variant="secondary">
             {post.category}
           </Badge>
         </div>
