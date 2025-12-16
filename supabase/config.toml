@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.fetch-federal-register]
 verify_jwt = false
+
+[functions.fetch-msha-fatalities]
+verify_jwt = false
+
+[functions.fetch-market-data]
+verify_jwt = false

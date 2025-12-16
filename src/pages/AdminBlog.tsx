@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { 
   ShieldCheck, Loader2, Plus, Trash2, Eye, Edit, 
   RefreshCw, FileText, Clock, CheckCircle, XCircle, ImagePlus,
-  HardHat, Scale, TrendingUp, Newspaper, Cpu, AlertTriangle
+  HardHat, Scale, TrendingUp, Newspaper, Cpu, AlertTriangle, Skull, DollarSign
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -182,6 +182,42 @@ export default function AdminBlog() {
     }
   };
 
+  const handleFetchFatalities = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-msha-fatalities');
+      if (error) throw error;
+      toast({ 
+        title: 'MSHA Fatalities fetched!', 
+        description: `${data.new_records || 0} new records from ${data.source}` 
+      });
+      refetch();
+    } catch (error: any) {
+      toast({ 
+        title: 'Fetch failed', 
+        description: error.message || 'Failed to fetch MSHA fatalities', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
+  const handleFetchMarketData = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-market-data');
+      if (error) throw error;
+      toast({ 
+        title: 'Market data fetched!', 
+        description: `${data.commodities} commodities, ${data.signals?.length || 0} signals${data.triggered_content ? ' (triggered content)' : ''}` 
+      });
+      refetch();
+    } catch (error: any) {
+      toast({ 
+        title: 'Fetch failed', 
+        description: error.message || 'Failed to fetch market data', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
   const handleBackfillImages = async () => {
     setBackfilling(true);
     try {
@@ -252,10 +288,30 @@ export default function AdminBlog() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline" onClick={handleFetchFederalRegister} disabled={fetchingFedReg}>
-              {fetchingFedReg ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Newspaper className="h-4 w-4 mr-2" />}
-              Fetch Regulations
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" disabled={fetchingFedReg}>
+                  {fetchingFedReg ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Newspaper className="h-4 w-4 mr-2" />}
+                  Data Pipelines
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Fetch External Data</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleFetchFederalRegister}>
+                  <Scale className="h-4 w-4 mr-2" />
+                  Federal Register (Regulations)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleFetchFatalities}>
+                  <Skull className="h-4 w-4 mr-2" />
+                  MSHA Fatalities
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleFetchMarketData}>
+                  <DollarSign className="h-4 w-4 mr-2" />
+                  Market Data (Commodities)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {postsWithoutImages > 0 && (
               <Button variant="outline" onClick={handleBackfillImages} disabled={backfilling}>
                 {backfilling ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ImagePlus className="h-4 w-4 mr-2" />}

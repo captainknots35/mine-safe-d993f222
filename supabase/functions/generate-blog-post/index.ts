@@ -456,10 +456,14 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Parse optional request body for manual persona/cluster override or regulatory alert
+    // Parse optional request body for manual persona/cluster override or alerts
     let requestedCluster: keyof typeof KEYWORD_CLUSTERS | null = null;
     let regulatoryAlert: any = null;
+    let fatalityAlert: any = null;
+    let marketAlert: any = null;
     let customKeyword: string | null = null;
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
     
     try {
       const body = await req.json();
@@ -471,6 +475,22 @@ serve(async (req) => {
         requestedCluster = 'compliance'; // Force compliance persona for regulatory alerts
         customKeyword = `MSHA ${regulatoryAlert.type}: ${regulatoryAlert.title}`;
         console.log(`Regulatory Alert received: ${regulatoryAlert.document_number}`);
+      }
+      if (body.fatality_alert) {
+        fatalityAlert = body.fatality_alert;
+        requestedCluster = 'hazard'; // Force Big Mike for fatality toolbox talks
+        customKeyword = `${fatalityAlert.classification} hazard prevention mining`;
+        console.log(`Fatality Alert received: ${fatalityAlert.classification}`);
+      }
+      if (body.market_alert) {
+        marketAlert = body.market_alert;
+        requestedCluster = 'market'; // Force Marcus Webb for market analysis
+        const primarySignal = marketAlert.signals?.[0];
+        customKeyword = primarySignal ? `Mining ${primarySignal.type} market analysis` : 'Mining market analysis commodities';
+        console.log(`Market Alert received: ${marketAlert.signals?.length || 0} signals`);
+      }
+      if (body.retry_count) {
+        retryCount = body.retry_count;
       }
     } catch { /* No body or invalid JSON - use time-based selection */ }
 
@@ -549,6 +569,48 @@ CRITICAL: This article MUST focus on this specific regulatory development. Expla
       console.log(`Injected regulatory alert context for ${regulatoryAlert.document_number}`);
     }
 
+    // FATALITY ALERT INJECTION (Pipeline B from document)
+    if (fatalityAlert) {
+      const fatalityContext = `\n\n[URGENT FATALITY ALERT - ${fatalityAlert.classification?.toUpperCase() || 'INCIDENT'}]
+Classification: ${fatalityAlert.classification}
+Mine Type: ${fatalityAlert.mine_type || 'Unknown'}
+Date: ${fatalityAlert.date || 'Recent'}
+
+Summary: ${fatalityAlert.summary || 'A miner was fatally injured in this type of incident.'}
+
+CRITICAL: This Toolbox Talk MUST focus on preventing ${fatalityAlert.classification} incidents. Include:
+1. What went wrong and how this type of accident typically occurs
+2. Specific hazard recognition techniques
+3. Pre-shift checks that could catch warning signs
+4. The regulations that apply (cite specific 30 CFR sections)
+5. What you want the crew to do TODAY to prevent this
+
+Make it personal. Make it stick. Someone died.`;
+      ragContext += fatalityContext;
+      console.log(`Injected fatality alert context for ${fatalityAlert.classification}`);
+    }
+
+    // MARKET ALERT INJECTION (Pipeline C from document)
+    if (marketAlert) {
+      const signalDetails = marketAlert.signals?.map((s: any) => `- ${s.type}: ${s.message}\n  Analysis: ${s.analysis}`).join('\n') || '';
+      const commodityPrices = marketAlert.commodities?.map((c: any) => `${c.name}: $${c.price} (${c.changePercent > 0 ? '+' : ''}${c.changePercent}%)`).join(', ') || '';
+      const etfPerformance = marketAlert.etfs?.map((e: any) => `${e.symbol}: ${e.changePercent > 0 ? '+' : ''}${e.changePercent}%`).join(', ') || '';
+      
+      const marketContext = `\n\n[MARKET DATA ALERT - LIVE DATA]
+${signalDetails ? 'KEY SIGNALS:\n' + signalDetails : ''}
+
+COMMODITY PRICES: ${commodityPrices || 'Data unavailable'}
+MINING ETF PERFORMANCE: ${etfPerformance || 'Data unavailable'}
+
+CRITICAL: Use this real market data in your analysis. Focus on:
+1. What's the conventional narrative vs what's really happening?
+2. Second-order effects operators should consider
+3. Specific implications for CapEx decisions, labor, or operations
+4. What could prove this analysis wrong?`;
+      ragContext += marketContext;
+      console.log(`Injected market alert context with ${marketAlert.signals?.length || 0} signals`);
+    }
+
     // AGENT A: The Strategist
     console.log("Agent A: Strategist generating outline...");
     const outlineResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -589,16 +651,42 @@ Output a JSON object with:
     const outline = JSON.parse(outlineData.choices[0].message.content);
     console.log(`Outline generated: "${outline.title}"`);
 
-    // REDUNDANCY CHECK via embedding
+    // REDUNDANCY CHECK via embedding with RETRY LOGIC
     console.log("Checking for redundant content...");
     const topicEmbedding = await generateEmbedding(`${outline.title} ${outline.angle}`, LOVABLE_API_KEY);
     
     if (topicEmbedding) {
       const { isRedundant, similarPost } = await checkRedundancy(supabase, topicEmbedding);
-      if (isRedundant) {
+      if (isRedundant && retryCount < MAX_RETRIES) {
         console.log(`REDUNDANCY DETECTED! Similar to: "${similarPost}"`);
-        // In production, we'd retry with a different topic. For now, log and continue.
-        console.log("Proceeding anyway (redundancy check is advisory)");
+        console.log(`Retry ${retryCount + 1}/${MAX_RETRIES}: Selecting different keyword...`);
+        
+        // Select a different keyword from the same cluster
+        const availableKeywords = selectedCluster.keywords.filter(k => k !== selectedKeyword);
+        if (availableKeywords.length > 0) {
+          const newKeyword = selectRandomItem(availableKeywords);
+          console.log(`Retrying with keyword: "${newKeyword}"`);
+          
+          // Recursive call with incremented retry count
+          const retryResponse = await fetch(req.url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': req.headers.get('Authorization') || '',
+            },
+            body: JSON.stringify({
+              cluster: selectedClusterKey,
+              customKeyword: newKeyword,
+              retry_count: retryCount + 1,
+            }),
+          });
+          
+          return retryResponse;
+        } else {
+          console.log("No alternative keywords available, proceeding with current topic");
+        }
+      } else if (isRedundant) {
+        console.log(`REDUNDANCY WARNING: Similar to "${similarPost}" but max retries reached. Proceeding.`);
       }
     }
 
@@ -739,6 +827,8 @@ Output JSON with:
       compliance: 'Part 46',
       hazard: 'Safety Alerts',
       market: 'Industry Trends',
+      technology: 'Technology',
+      emergency: 'Training',
     };
 
     const featuredImageUrl = await getRandomExistingImage(supabase) || "https://minesafetraining.com/og-default.jpg";
