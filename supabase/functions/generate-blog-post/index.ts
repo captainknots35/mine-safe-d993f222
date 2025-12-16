@@ -767,8 +767,25 @@ Output only the polished HTML content.`,
     const editorData = await editorResponse.json();
     let editedContent = editorData.choices[0].message.content.replace(/```html\n?/g, '').replace(/```\n?/g, '');
 
-    // AGENT D: The Auditor (hallucination control)
-    console.log("Agent D: Auditor validating content...");
+    // ============================================================================
+    // AGENT D: THE FACT-CHECKER (Enhanced Accuracy Validation)
+    // ============================================================================
+    console.log("Agent D: Fact-Checker validating content accuracy...");
+    
+    // Step 1: Fetch authoritative sources from research_materials for cross-referencing
+    const { data: authoritativeSources } = await supabase
+      .from('research_materials')
+      .select('raw_content, source_type, metadata')
+      .in('source_type', ['federal_register', 'msha_fatality', 'regulation'])
+      .limit(10);
+    
+    const sourceContext = authoritativeSources?.length 
+      ? authoritativeSources.map(s => `[${s.source_type}]: ${s.raw_content?.substring(0, 500)}`).join('\n\n')
+      : '';
+    
+    console.log(`Loaded ${authoritativeSources?.length || 0} authoritative sources for fact-checking`);
+
+    // Step 2: Comprehensive fact-checking with the Auditor agent
     const auditorResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
@@ -777,21 +794,66 @@ Output only the polished HTML content.`,
         messages: [
           {
             role: "system",
-            content: `You are an MSHA compliance auditor. Your job is to validate mining safety content for accuracy and safety.
+            content: `You are a MSHA compliance auditor and fact-checker for mining safety content. Your job is to ensure ACCURACY and SAFETY in all published content.
 
-CRITICAL CHECKS:
-1. If it claims a specific 30 CFR regulation exists, verify it's a real section (e.g., 30 CFR § 46.5 is real)
-2. If it conflates Part 46 (Competent Person) with Part 48 (Approved Instructor), that's a CRITICAL ERROR
-3. If it gives advice that could be unsafe (e.g., "skip pre-shift if you're late"), flag it
-4. Check that silica PEL values are correct (50 μg/m³ is the new PEL)
-5. Verify deadline dates are plausible (Coal Silica: Aug 2025, M/NM: April 2026)
+============ KNOWN AUTHORITATIVE DATA ============
+${sourceContext || 'No authoritative sources loaded - apply extra scrutiny.'}
+==================================================
 
-Output JSON with:
-- confidence_score: 0-100 (100 = no issues found)
-- issues: Array of issues found (empty if none)
-- corrected_content: The HTML with any factual corrections applied (or same content if no corrections needed)`,
+CRITICAL VERIFICATION CHECKLIST (assign penalties to confidence_score):
+
+1. REGULATORY CITATIONS (-30 points each if wrong):
+   - 30 CFR Part 46 = Surface Metal/Non-Metal (Competent Person can train)
+   - 30 CFR Part 48 = Underground/Coal (MSHA-Approved Instructor required, Blue Card)
+   - Real sections include: §46.3, §46.5, §46.6, §46.7, §46.8, §46.9, §46.10, §46.11, §46.12
+   - Real sections include: §48.3, §48.5, §48.6, §48.7, §48.8, §48.9, §48.10, §48.11, §48.12
+   - If article claims a section exists, verify it's structurally plausible
+   - CRITICAL ERROR: Conflating Part 46 "Competent Person" with Part 48 "Approved Instructor"
+
+2. SAFETY-CRITICAL DATA (-25 points each if wrong):
+   - Silica PEL: 50 μg/m³ (NEW), Action Level: 25 μg/m³
+   - Coal Silica Compliance Deadline: August 18, 2025 (after 8th Circuit stay)
+   - Metal/Non-Metal Silica Deadline: April 8, 2026
+   - Part 46 New Miner Training: 24 hours before working (independent contractor: 24 hours)
+   - Part 48 Surface: 24 hours training minimum
+   - Part 48 Underground: 40 hours training minimum
+
+3. DANGEROUS ADVICE (-50 points, auto-flag for review):
+   - Any advice to skip or shortcut safety procedures
+   - Incorrect lockout/tagout procedures
+   - Wrong emergency response guidance
+   - Underestimating hazard severity
+
+4. VERIFIABLE CLAIMS (check against sources if available):
+   - If fatality data is cited, cross-reference with MSHA data if available
+   - If market data is cited, ensure it matches provided market context
+   - If regulatory changes are mentioned, verify against Federal Register data
+
+5. SOURCE CITATION INJECTION:
+   - For any factual claim about regulations, add inline citation: <cite>30 CFR § XX.X</cite>
+   - For statistics or data, add: <cite>Source: MSHA/DOL/Industry</cite> where verifiable
+   - Do NOT add citations to opinions or general advice
+
+OUTPUT FORMAT (JSON):
+{
+  "confidence_score": 0-100 (start at 100, subtract for issues found),
+  "regulatory_accuracy": 0-100 (score just for CFR citations),
+  "safety_accuracy": 0-100 (score for safety-critical data),
+  "issues": [
+    {
+      "type": "regulatory|safety|factual|citation_missing",
+      "severity": "critical|major|minor",
+      "description": "What's wrong",
+      "location": "Where in the text",
+      "correction": "What it should say"
+    }
+  ],
+  "citations_added": number (how many inline citations were injected),
+  "requires_human_review": boolean (true if any critical/safety issues found),
+  "corrected_content": "The HTML with corrections and citations applied"
+}`,
           },
-          { role: "user", content: `Audit this mining safety article:\n\n${editedContent}` },
+          { role: "user", content: `FACT-CHECK THIS MINING SAFETY ARTICLE:\n\n${editedContent}` },
         ],
         response_format: { type: "json_object" },
       }),
@@ -799,21 +861,111 @@ Output JSON with:
 
     let finalContent = editedContent;
     let confidenceScore = 100;
+    let regulatoryAccuracy = 100;
+    let safetyAccuracy = 100;
+    let requiresReview = false;
+    let citationsAdded = 0;
+    let auditIssues: any[] = [];
 
     if (auditorResponse.ok) {
       try {
         const auditorData = await auditorResponse.json();
         const audit = JSON.parse(auditorData.choices[0].message.content);
-        confidenceScore = audit.confidence_score || 100;
-        if (audit.issues?.length) {
-          console.log(`Auditor found ${audit.issues.length} issues:`, audit.issues);
+        
+        confidenceScore = audit.confidence_score ?? 100;
+        regulatoryAccuracy = audit.regulatory_accuracy ?? 100;
+        safetyAccuracy = audit.safety_accuracy ?? 100;
+        requiresReview = audit.requires_human_review ?? false;
+        citationsAdded = audit.citations_added ?? 0;
+        auditIssues = audit.issues || [];
+        
+        if (auditIssues.length > 0) {
+          console.log(`=== FACT-CHECK RESULTS ===`);
+          console.log(`Issues found: ${auditIssues.length}`);
+          auditIssues.forEach((issue: any, i: number) => {
+            console.log(`  ${i + 1}. [${issue.severity?.toUpperCase()}] ${issue.type}: ${issue.description}`);
+          });
         }
+        
         if (audit.corrected_content) {
           finalContent = audit.corrected_content.replace(/```html\n?/g, '').replace(/```\n?/g, '');
         }
-        console.log(`Auditor confidence score: ${confidenceScore}`);
+        
+        console.log(`Fact-Check Scores - Overall: ${confidenceScore}, Regulatory: ${regulatoryAccuracy}, Safety: ${safetyAccuracy}`);
+        console.log(`Citations added: ${citationsAdded}, Requires Review: ${requiresReview}`);
+        
+        // Log critical issues for monitoring
+        const criticalIssues = auditIssues.filter((i: any) => i.severity === 'critical');
+        if (criticalIssues.length > 0) {
+          console.error(`CRITICAL ISSUES DETECTED:`, criticalIssues);
+        }
       } catch (e) {
-        console.log("Auditor response parsing failed, using edited content");
+        console.log("Fact-checker response parsing failed, using edited content with warning");
+        requiresReview = true; // Flag for human review if fact-checking failed
+      }
+    } else {
+      console.log("Fact-checker API call failed, flagging for review");
+      requiresReview = true;
+    }
+
+    // ============================================================================
+    // AGENT E: THE VERIFIER (Cross-Reference with Known Data)
+    // ============================================================================
+    // Only run if we have specific alerts that can be verified
+    if (regulatoryAlert || fatalityAlert || marketAlert) {
+      console.log("Agent E: Verifier cross-referencing with alert data...");
+      
+      let verificationContext = "";
+      if (regulatoryAlert) {
+        verificationContext += `MUST MENTION: Document ${regulatoryAlert.document_number}, "${regulatoryAlert.title}"\n`;
+      }
+      if (fatalityAlert) {
+        verificationContext += `MUST MENTION: ${fatalityAlert.classification} incident, ${fatalityAlert.mine_type || 'mine'}\n`;
+      }
+      if (marketAlert?.commodities) {
+        const prices = marketAlert.commodities.map((c: any) => `${c.name}: $${c.price}`).join(', ');
+        verificationContext += `VERIFY PRICES: ${prices}\n`;
+      }
+      
+      const verifierResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: `You are a verification agent. Check if the article properly addresses the required data.
+
+REQUIRED DATA TO VERIFY:
+${verificationContext}
+
+Output JSON:
+{
+  "data_coverage_score": 0-100 (did article address the required data?),
+  "missing_data": ["list of required items not adequately covered"],
+  "verification_notes": "brief explanation"
+}`,
+            },
+            { role: "user", content: finalContent },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
+      
+      if (verifierResponse.ok) {
+        try {
+          const verifierData = await verifierResponse.json();
+          const verification = JSON.parse(verifierData.choices[0].message.content);
+          console.log(`Verification Score: ${verification.data_coverage_score}`);
+          if (verification.missing_data?.length) {
+            console.log(`Missing data points:`, verification.missing_data);
+            // Reduce confidence if key data wasn't addressed
+            confidenceScore = Math.min(confidenceScore, verification.data_coverage_score);
+          }
+        } catch (e) {
+          console.log("Verifier response parsing failed");
+        }
       }
     }
 
@@ -836,13 +988,22 @@ Output JSON with:
     // Generate embedding for the final content
     const contentEmbedding = await generateEmbedding(`${outline.title} ${excerpt}`, LOVABLE_API_KEY);
 
-    // Determine status based on confidence score
-    const status = confidenceScore >= 90 ? 'published' : 'draft';
+    // Determine status based on confidence score AND human review flag
+    // Posts with critical issues or low confidence are saved as draft
+    const status = (confidenceScore >= 85 && !requiresReview) ? 'published' : 'draft';
     if (status === 'draft') {
-      console.log(`Low confidence (${confidenceScore}) - saving as draft for review`);
+      console.log(`=== FLAGGED FOR REVIEW ===`);
+      console.log(`Confidence: ${confidenceScore}, Requires Review: ${requiresReview}`);
+      console.log(`Regulatory Accuracy: ${regulatoryAccuracy}, Safety Accuracy: ${safetyAccuracy}`);
+      if (auditIssues.length > 0) {
+        console.log(`Issues requiring attention:`);
+        auditIssues.forEach((issue: any, i: number) => {
+          console.log(`  ${i + 1}. [${issue.severity}] ${issue.description}`);
+        });
+      }
     }
 
-    // Insert into database
+    // Insert into database with enhanced accuracy metadata
     const { data: post, error: insertError } = await supabase
       .from('blog_posts')
       .insert({
@@ -870,8 +1031,9 @@ Output JSON with:
     console.log(`Post ID: ${post.id}`);
     console.log(`Title: ${post.title}`);
     console.log(`Persona: ${persona.name}`);
-    console.log(`Confidence: ${confidenceScore}`);
-    console.log(`Status: ${status}`);
+    console.log(`Confidence: ${confidenceScore} (Reg: ${regulatoryAccuracy}, Safety: ${safetyAccuracy})`);
+    console.log(`Citations Added: ${citationsAdded}`);
+    console.log(`Status: ${status}${requiresReview ? ' (REQUIRES HUMAN REVIEW)' : ''}`);
 
     return new Response(
       JSON.stringify({
@@ -883,6 +1045,11 @@ Output JSON with:
           persona: persona.name,
           content_type: persona.content_type,
           confidence_score: confidenceScore,
+          regulatory_accuracy: regulatoryAccuracy,
+          safety_accuracy: safetyAccuracy,
+          citations_added: citationsAdded,
+          requires_review: requiresReview,
+          issues_found: auditIssues.length,
           status,
         },
       }),
