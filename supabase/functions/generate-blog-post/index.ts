@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { decode as base64Decode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -99,109 +98,47 @@ function estimateReadingTime(html: string): number {
   return Math.max(3, Math.ceil(words / 200));
 }
 
-async function generateFeaturedImage(title: string, category: string, apiKey: string): Promise<string | null> {
+async function getRandomExistingImage(supabase: any): Promise<string | null> {
   try {
-    console.log("Generating featured image for:", title);
+    console.log("Fetching existing images from storage...");
     
-    const imagePrompt = `Professional mining safety training blog header image. Topic: ${title}. Style: Modern industrial photography, surface mining operation, safety equipment, workers with PPE. Color scheme: dark blue, orange safety accents, industrial tones. Wide 16:9 aspect ratio, professional quality, no text overlays. Category: ${category}.`;
-
-    const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [
-          {
-            role: "user",
-            content: imagePrompt,
-          },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
-
-    if (!imageResponse.ok) {
-      const errorText = await imageResponse.text();
-      console.error("Image generation failed:", errorText);
-      return null;
-    }
-
-    const imageData = await imageResponse.json();
-    const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!imageUrl) {
-      console.error("No image URL in response");
-      return null;
-    }
-
-    console.log("Image generated successfully");
-    return imageUrl;
-  } catch (error) {
-    console.error("Error generating image:", error);
-    return null;
-  }
-}
-
-async function uploadImageToStorage(
-  supabase: any,
-  base64DataUrl: string,
-  slug: string
-): Promise<string | null> {
-  try {
-    // Extract base64 data from data URL
-    const matches = base64DataUrl.match(/^data:image\/(\w+);base64,(.+)$/);
-    if (!matches) {
-      console.error("Invalid base64 data URL format");
-      return null;
-    }
-
-    const imageType = matches[1];
-    const base64Data = matches[2];
-    const imageBytes = base64Decode(base64Data);
-    
-    const fileName = `blog-images/${slug}.${imageType}`;
-
-    // Check if bucket exists, create if not
-    const { data: buckets } = await supabase.storage.listBuckets();
-    const bucketExists = buckets?.some((b: any) => b.name === 'blog-images');
-    
-    if (!bucketExists) {
-      console.log("Creating blog-images bucket...");
-      const { error: bucketError } = await supabase.storage.createBucket('blog-images', {
-        public: true,
-        fileSizeLimit: 5242880, // 5MB
-      });
-      if (bucketError) {
-        console.error("Error creating bucket:", bucketError);
-        return null;
-      }
-    }
-
-    // Upload the image
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    // List all files in the blog-images bucket
+    const { data: files, error: listError } = await supabase.storage
       .from('blog-images')
-      .upload(fileName, imageBytes, {
-        contentType: `image/${imageType}`,
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.error("Error uploading image:", uploadError);
+      .list('', { limit: 100 });
+    
+    if (listError) {
+      console.error("Error listing images:", listError);
       return null;
     }
-
+    
+    if (!files || files.length === 0) {
+      console.log("No existing images found");
+      return null;
+    }
+    
+    // Filter to only image files
+    const imageFiles = files.filter((f: any) => 
+      f.name && (f.name.endsWith('.png') || f.name.endsWith('.jpg') || f.name.endsWith('.jpeg') || f.name.endsWith('.webp'))
+    );
+    
+    if (imageFiles.length === 0) {
+      console.log("No image files found in bucket");
+      return null;
+    }
+    
+    // Select a random image
+    const randomImage = selectRandomItem(imageFiles);
+    
     // Get public URL
     const { data: publicUrlData } = supabase.storage
       .from('blog-images')
-      .getPublicUrl(fileName);
-
-    console.log("Image uploaded successfully:", publicUrlData.publicUrl);
+      .getPublicUrl(randomImage.name);
+    
+    console.log("Selected existing image:", publicUrlData.publicUrl);
     return publicUrlData.publicUrl;
   } catch (error) {
-    console.error("Error uploading image to storage:", error);
+    console.error("Error getting random image:", error);
     return null;
   }
 }
@@ -392,20 +329,12 @@ Output only the polished HTML content.`,
 
     const category = categoryMap[selectedCluster] || 'Part 46';
 
-    // AGENT D: Generate featured image
-    console.log("Starting featured image generation...");
-    let featuredImageUrl: string | null = null;
+    // Select random existing image (cycling through existing images instead of generating new ones)
+    console.log("Selecting random existing featured image...");
+    let featuredImageUrl = await getRandomExistingImage(supabase);
     
-    const base64Image = await generateFeaturedImage(outlineContent.title, category, LOVABLE_API_KEY);
-    
-    if (base64Image) {
-      featuredImageUrl = await uploadImageToStorage(supabase, base64Image, slug);
-    }
-    
-    if (featuredImageUrl) {
-      console.log("Featured image uploaded:", featuredImageUrl);
-    } else {
-      console.log("Using default featured image");
+    if (!featuredImageUrl) {
+      console.log("No existing images found, using default");
       featuredImageUrl = "https://minesafetraining.com/og-default.jpg";
     }
 
