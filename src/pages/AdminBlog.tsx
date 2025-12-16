@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { 
   ShieldCheck, Loader2, Plus, Trash2, Eye, Edit, 
-  RefreshCw, FileText, Clock, CheckCircle, XCircle, ImagePlus 
+  RefreshCw, FileText, Clock, CheckCircle, XCircle, ImagePlus,
+  HardHat, Scale, TrendingUp, Newspaper
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -40,6 +41,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,6 +60,12 @@ const STATUS_COLORS: Record<string, string> = {
   published: 'bg-green-500/20 text-green-700 dark:text-green-400',
 };
 
+const PERSONA_COLORS: Record<string, string> = {
+  toolbox_talk: 'bg-orange-500/20 text-orange-700',
+  compliance: 'bg-blue-500/20 text-blue-700',
+  market_analysis: 'bg-purple-500/20 text-purple-700',
+};
+
 export default function AdminBlog() {
   const { user, userRole, loading: authLoading } = useAuth();
   const { data: posts, isLoading, refetch } = useAdminBlogPosts();
@@ -60,6 +75,7 @@ export default function AdminBlog() {
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
   const [backfilling, setBackfilling] = useState(false);
+  const [fetchingFedReg, setFetchingFedReg] = useState(false);
 
   // Auth check
   if (authLoading) {
@@ -120,11 +136,17 @@ export default function AdminBlog() {
     }
   };
 
-  const handleGeneratePost = async () => {
+  const handleGeneratePost = async (cluster?: string) => {
     setGenerating(true);
     try {
-      await generatePost.mutateAsync();
-      toast({ title: 'Post generated!', description: 'A new blog post has been created' });
+      const { data, error } = await supabase.functions.invoke('generate-blog-post', {
+        body: cluster ? { cluster } : {}
+      });
+      if (error) throw error;
+      toast({ 
+        title: 'Post generated!', 
+        description: `Created: ${data.post?.title || 'New post'} (${data.post?.persona || 'auto'})` 
+      });
       refetch();
     } catch (error: any) {
       toast({ 
@@ -134,6 +156,27 @@ export default function AdminBlog() {
       });
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleFetchFederalRegister = async () => {
+    setFetchingFedReg(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-federal-register');
+      if (error) throw error;
+      toast({ 
+        title: 'Federal Register fetched!', 
+        description: `Found ${data.new_documents} new docs, triggered ${data.potential_blogs || 0} blogs` 
+      });
+      refetch();
+    } catch (error: any) {
+      toast({ 
+        title: 'Fetch failed', 
+        description: error.message || 'Failed to fetch Federal Register', 
+        variant: 'destructive' 
+      });
+    } finally {
+      setFetchingFedReg(false);
     }
   };
 
@@ -207,28 +250,44 @@ export default function AdminBlog() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
+            <Button variant="outline" onClick={handleFetchFederalRegister} disabled={fetchingFedReg}>
+              {fetchingFedReg ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Newspaper className="h-4 w-4 mr-2" />}
+              Fetch Regulations
+            </Button>
             {postsWithoutImages > 0 && (
-              <Button 
-                variant="outline" 
-                onClick={handleBackfillImages} 
-                disabled={backfilling}
-              >
-                {backfilling ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <ImagePlus className="h-4 w-4 mr-2" />
-                )}
+              <Button variant="outline" onClick={handleBackfillImages} disabled={backfilling}>
+                {backfilling ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <ImagePlus className="h-4 w-4 mr-2" />}
                 Add Images ({postsWithoutImages})
               </Button>
             )}
-            <Button onClick={handleGeneratePost} disabled={generating}>
-              {generating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4 mr-2" />
-              )}
-              Generate Post
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button disabled={generating}>
+                  {generating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Plus className="h-4 w-4 mr-2" />}
+                  Generate Post
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Select Persona</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleGeneratePost()}>
+                  <Clock className="h-4 w-4 mr-2" />
+                  Auto (Time-Based)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGeneratePost('hazard')}>
+                  <HardHat className="h-4 w-4 mr-2" />
+                  Big Mike (Toolbox Talk)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGeneratePost('compliance')}>
+                  <Scale className="h-4 w-4 mr-2" />
+                  Dr. Chen (Compliance)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleGeneratePost('market')}>
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Marcus Webb (Market)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -308,18 +367,29 @@ export default function AdminBlog() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Title</TableHead>
+                    <TableHead>Persona</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Confidence</TableHead>
                     <TableHead>Views</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {posts?.map((post) => (
+                  {posts?.map((post: any) => (
                     <TableRow key={post.id}>
                       <TableCell className="font-medium max-w-xs truncate">
                         {post.title}
+                      </TableCell>
+                      <TableCell>
+                        {post.persona_used ? (
+                          <Badge className={PERSONA_COLORS[post.content_type] || 'bg-muted'}>
+                            {post.persona_used?.split(' ')[0] || '-'}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{post.category}</Badge>
@@ -343,6 +413,15 @@ export default function AdminBlog() {
                             <SelectItem value="published">Published</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        {post.confidence_score != null ? (
+                          <Badge variant={post.confidence_score >= 90 ? 'default' : 'destructive'}>
+                            {post.confidence_score}%
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">-</span>
+                        )}
                       </TableCell>
                       <TableCell>{post.view_count}</TableCell>
                       <TableCell>

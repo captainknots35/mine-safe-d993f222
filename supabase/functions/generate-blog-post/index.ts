@@ -293,6 +293,20 @@ async function checkRedundancy(supabase: any, embedding: number[]): Promise<{ is
 // ============================================================================
 // MAIN HANDLER
 // ============================================================================
+// Time-based persona selection as per document specification:
+// 9 AM UTC = Toolbox Talk (Big Mike) - hazard cluster
+// 1 PM UTC = Compliance (Dr. Chen) - compliance cluster  
+// 5 PM UTC = Market Analysis (Marcus Webb) - market cluster
+function getTimeBasedCluster(): keyof typeof KEYWORD_CLUSTERS {
+  const hour = new Date().getUTCHours();
+  if (hour >= 7 && hour < 11) return 'hazard';      // Morning: Toolbox Talks
+  if (hour >= 11 && hour < 15) return 'compliance'; // Midday: Compliance Guides
+  if (hour >= 15 && hour < 19) return 'market';     // Evening: Market Analysis
+  // Off-hours: random selection
+  const clusters: Array<keyof typeof KEYWORD_CLUSTERS> = ['hazard', 'compliance', 'market'];
+  return clusters[Math.floor(Math.random() * clusters.length)];
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -307,15 +321,33 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Select cluster and persona
-    const clusterKeys = Object.keys(KEYWORD_CLUSTERS) as Array<keyof typeof KEYWORD_CLUSTERS>;
-    const selectedClusterKey = selectRandomItem(clusterKeys);
+    // Parse optional request body for manual persona/cluster override or regulatory alert
+    let requestedCluster: keyof typeof KEYWORD_CLUSTERS | null = null;
+    let regulatoryAlert: any = null;
+    let customKeyword: string | null = null;
+    
+    try {
+      const body = await req.json();
+      if (body.cluster && KEYWORD_CLUSTERS[body.cluster as keyof typeof KEYWORD_CLUSTERS]) {
+        requestedCluster = body.cluster as keyof typeof KEYWORD_CLUSTERS;
+      }
+      if (body.regulatory_alert) {
+        regulatoryAlert = body.regulatory_alert;
+        requestedCluster = 'compliance'; // Force compliance persona for regulatory alerts
+        customKeyword = `MSHA ${regulatoryAlert.type}: ${regulatoryAlert.title}`;
+        console.log(`Regulatory Alert received: ${regulatoryAlert.document_number}`);
+      }
+    } catch { /* No body or invalid JSON - use time-based selection */ }
+
+    // Select cluster based on time or manual override
+    const selectedClusterKey = requestedCluster || getTimeBasedCluster();
     const selectedCluster = KEYWORD_CLUSTERS[selectedClusterKey];
-    const selectedKeyword = selectRandomItem(selectedCluster.keywords);
+    const selectedKeyword = customKeyword || selectRandomItem(selectedCluster.keywords);
     const persona = PERSONAS[selectedCluster.persona as keyof typeof PERSONAS];
 
     console.log(`=== BLOG GENERATION START ===`);
-    console.log(`Cluster: ${selectedClusterKey}`);
+    console.log(`UTC Hour: ${new Date().getUTCHours()}`);
+    console.log(`Cluster: ${selectedClusterKey} ${requestedCluster ? '(manual override)' : '(time-based)'}`);
     console.log(`Keyword: "${selectedKeyword}"`);
     console.log(`Persona: ${persona.name} (${persona.content_type})`);
 
@@ -331,6 +363,55 @@ serve(async (req) => {
       ragContext = "\n\n[RECENT INDUSTRY DATA - Use these facts if relevant]\n" + 
         researchMaterials.map(r => `- ${r.source_type}: ${r.summary || r.raw_content.substring(0, 500)}`).join('\n');
       console.log(`Injected ${researchMaterials.length} research materials for RAG`);
+    }
+
+    // SEASONAL CONTEXT INJECTION (Pipeline D from document)
+    const month = new Date().getMonth(); // 0-11
+    let seasonalContext = "";
+    if (month >= 10 || month <= 2) { // Nov-Feb: Winter
+      seasonalContext = `\n\n[SEASONAL ALERT - WINTER CONDITIONS]
+- Ice and snow create slip/trip hazards on walkways, ladders, and equipment
+- Frozen berms behave differently - reduced stopping power on haul roads
+- Check anti-freeze levels in all fire suppression systems
+- Diesel equipment may have cold-start issues - follow warm-up procedures
+- Hypothermia risk for workers - enforce break schedules in heated areas
+- Highwall stability concerns during freeze-thaw cycles`;
+    } else if (month >= 5 && month <= 8) { // June-Sept: Summer
+      seasonalContext = `\n\n[SEASONAL ALERT - HEAT STRESS CONDITIONS]
+- Heat index monitoring is critical - NIOSH guidelines apply
+- Mandatory hydration breaks every 15-20 minutes in high heat
+- Watch for signs of heat exhaustion: confusion, rapid heartbeat, nausea
+- Underground mines: ventilation becomes even more critical
+- Dust suppression may be less effective in dry conditions
+- Lightning risk during summer storms - have evacuation procedures ready`;
+    } else { // Spring/Fall: Transition
+      seasonalContext = `\n\n[SEASONAL ALERT - TRANSITION CONDITIONS]
+- Spring thaw creates ground instability and mud conditions
+- Fall brings shorter days - lighting becomes critical for safety
+- Transition weather can change rapidly - monitor forecasts
+- Equipment maintenance important as seasons change`;
+    }
+    ragContext += seasonalContext;
+    console.log(`Injected seasonal context for month ${month + 1}`);
+
+    // REGULATORY ALERT INJECTION (from Federal Register trigger)
+    if (regulatoryAlert) {
+      const regAlertContext = `\n\n[URGENT REGULATORY ALERT - NEW ${regulatoryAlert.type?.toUpperCase() || 'DOCUMENT'}]
+Document Number: ${regulatoryAlert.document_number}
+Title: ${regulatoryAlert.title}
+Citation: ${regulatoryAlert.citation || 'Pending publication'}
+Effective Date: ${regulatoryAlert.effective_date || 'See document for details'}
+
+Abstract:
+${regulatoryAlert.abstract || 'No abstract available'}
+
+CRITICAL: This article MUST focus on this specific regulatory development. Explain:
+1. What changed and who is affected
+2. Key compliance deadlines
+3. Specific actions operators must take
+4. Penalties for non-compliance`;
+      ragContext += regAlertContext;
+      console.log(`Injected regulatory alert context for ${regulatoryAlert.document_number}`);
     }
 
     // AGENT A: The Strategist
