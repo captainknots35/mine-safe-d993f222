@@ -24,7 +24,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const { toast } = useToast();
 
   const fetchUserData = async (userId: string) => {
@@ -63,55 +62,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-    
-    // Initial session check
-    const initSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserData(session.user.id);
-        }
-      } catch (error) {
-        console.error('Error initializing session:', error);
-      } finally {
-        if (mounted) {
-          setLoading(false);
-          setInitialLoadDone(true);
-        }
+
+    const setAuthState = (nextSession: Session | null) => {
+      if (!mounted) return;
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
+
+      if (nextSession?.user) {
+        // Defer Supabase queries to avoid auth deadlocks
+        setTimeout(() => {
+          if (!mounted) return;
+          fetchUserData(nextSession.user.id);
+        }, 0);
+      } else {
+        setProfile(null);
+        setUserRole(null);
       }
     };
 
-    initSession();
+    // Set up auth listener FIRST
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setAuthState(nextSession);
+    });
 
-    // Set up auth state listener for subsequent changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted || !initialLoadDone) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserData(session.user.id);
-        } else {
-          setProfile(null);
-          setUserRole(null);
-        }
-      }
-    );
+    // THEN check for existing session
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setAuthState(session);
+      })
+      .catch((error) => {
+        console.error('Error initializing session:', error);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [initialLoadDone]);
-
+  }, []);
 
   const signUp = async (email: string, password: string, userData?: any) => {
     const redirectUrl = `${window.location.origin}/my-courses`;
