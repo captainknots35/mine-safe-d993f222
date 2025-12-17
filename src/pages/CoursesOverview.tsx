@@ -42,7 +42,7 @@ const CoursesOverview = () => {
         <meta name="twitter:description" content="Part 46 and Part 48 mining safety training programs." />
         <meta name="twitter:image" content="https://minesafetraining.com/og-default.jpg" />
         
-        {/* JSON-LD Structured Data */}
+        {/* JSON-LD Structured Data - Course List */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -56,20 +56,90 @@ const CoursesOverview = () => {
                 "@type": "Course",
                 "position": 1,
                 "name": "Part 46 New Miner Training",
-                "description": "Comprehensive training for surface mining operations",
+                "description": "Comprehensive 24-hour training for surface mining operations meeting MSHA 30 CFR Part 46 requirements",
                 "provider": {
                   "@type": "Organization",
-                  "name": "MineSafe"
+                  "name": "MineSafe",
+                  "url": "https://minesafetraining.com"
+                },
+                "hasCourseInstance": {
+                  "@type": "CourseInstance",
+                  "courseMode": "online",
+                  "duration": "PT24H"
                 }
               },
               {
                 "@type": "Course",
                 "position": 2,
                 "name": "Part 48 Training",
-                "description": "Training for underground mining operations",
+                "description": "Advanced 40-hour training for underground mining operations meeting MSHA 30 CFR Part 48 requirements",
                 "provider": {
                   "@type": "Organization",
-                  "name": "MineSafe"
+                  "name": "MineSafe",
+                  "url": "https://minesafetraining.com"
+                },
+                "hasCourseInstance": {
+                  "@type": "CourseInstance",
+                  "courseMode": "online",
+                  "duration": "PT40H"
+                }
+              }
+            ]
+          })}
+        </script>
+        
+        {/* JSON-LD Structured Data - FAQ */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is MSHA Part 46 training?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "MSHA Part 46 training is required safety training for miners working at surface mines and surface areas of underground mines. It includes 24 hours of new miner training covering hazard recognition, health and safety aspects of mining, and emergency procedures as mandated by 30 CFR Part 46."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How long does MSHA new miner training take?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "MSHA Part 46 new miner training requires 24 hours of instruction. Part 48 new miner training for underground mines requires 40 hours. Both programs can be completed online at your own pace with MineSafe's flexible learning platform."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Is online MSHA training valid?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, online MSHA training is valid when provided by a qualified instructor and meets all regulatory requirements. MineSafe's courses are MSHA compliant and include instructor verification, time tracking, and official certificates upon completion."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is the difference between Part 46 and Part 48 training?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Part 46 covers surface mining operations and requires 24 hours of new miner training. Part 48 covers underground mining operations and requires 40 hours of new miner training. Part 48 includes additional topics specific to underground hazards like roof control, ventilation, and escape routes."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How often is MSHA refresher training required?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "MSHA requires annual refresher training of 8 hours for both Part 46 and Part 48 miners. This training must be completed no later than 12 months after the previous training and covers updates to safety procedures, new hazards, and regulatory changes."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Do I get a certificate after completing MSHA training?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes, upon successful completion of MineSafe training courses, you receive an official certificate verified by a qualified MSHA instructor. These certificates document your training completion for compliance with MSHA regulations and can be used for your employer's training records."
                 }
               }
             ]
