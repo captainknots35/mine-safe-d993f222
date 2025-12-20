@@ -40,9 +40,13 @@ const handler = async (req: Request): Promise<Response> => {
     let subject = "Welcome to MSHA Training Platform";
     let htmlContent = "";
 
+    // Use the production app URL for redirects
+    const appUrl = 'https://minesafe-training.lovable.app';
+    
     if (email_action_type === "signup" || email_action_type === "invite") {
       subject = "Confirm your MSHA Training Platform account";
-      const confirmUrl = `${site_url || 'https://yqpqfjmyghoehxzuevrz.supabase.co'}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to || site_url}`;
+      const redirectAfterVerify = `${appUrl}/email-confirmed`;
+      const confirmUrl = `https://yqpqfjmyghoehxzuevrz.supabase.co/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodeURIComponent(redirectAfterVerify)}`;
       
       htmlContent = `
         <!DOCTYPE html>
@@ -97,7 +101,8 @@ const handler = async (req: Request): Promise<Response> => {
       `;
     } else if (email_action_type === "recovery") {
       subject = "Reset your MSHA Training Platform password";
-      const resetUrl = `${site_url || 'https://yqpqfjmyghoehxzuevrz.supabase.co'}/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${redirect_to || site_url}`;
+      const redirectAfterReset = `${appUrl}/auth`;
+      const resetUrl = `https://yqpqfjmyghoehxzuevrz.supabase.co/auth/v1/verify?token=${token_hash}&type=${email_action_type}&redirect_to=${encodeURIComponent(redirectAfterReset)}`;
       
       htmlContent = `
         <!DOCTYPE html>
