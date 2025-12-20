@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { isTestAccount } from "@/utils/testAccountFilter";
 
 export interface FunnelStep {
   name: string;
@@ -123,28 +124,42 @@ export const useFunnelAnalytics = (liveData?: LiveAnalyticsData) => {
   return useQuery({
     queryKey: ["admin-funnel-analytics", liveData?.summary?.visitors],
     queryFn: async () => {
-      // Get counts for each stage of the funnel
-      const { count: totalProfiles } = await supabase
+      // First get test account user IDs to exclude
+      const { data: testProfiles } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true });
+        .select("id, email");
+      
+      const testUserIds = testProfiles
+        ?.filter(p => isTestAccount(p.email))
+        .map(p => p.id) || [];
 
-      const { count: totalEnrollments } = await supabase
+      // Get all profiles and filter out test accounts
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("id, email");
+      
+      const realProfiles = allProfiles?.filter(p => !isTestAccount(p.email)) || [];
+      const totalProfiles = realProfiles.length;
+
+      // Get all enrollments and filter out test accounts
+      const { data: allEnrollments } = await supabase
         .from("enrollments")
-        .select("*", { count: "exact", head: true });
+        .select("user_id, status");
+      
+      const realEnrollments = allEnrollments?.filter(e => !testUserIds.includes(e.user_id)) || [];
+      const totalEnrollments = realEnrollments.length;
+      const startedEnrollments = realEnrollments.filter(e => 
+        e.status === "in_progress" || e.status === "completed"
+      ).length;
+      const completedEnrollments = realEnrollments.filter(e => e.status === "completed").length;
 
-      const { count: startedEnrollments } = await supabase
-        .from("enrollments")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["in_progress", "completed"]);
-
-      const { count: completedEnrollments } = await supabase
-        .from("enrollments")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "completed");
-
-      const { count: certificates } = await supabase
+      // Get certificates and filter out test accounts
+      const { data: allCertificates } = await supabase
         .from("training_certificates")
-        .select("*", { count: "exact", head: true });
+        .select("user_id");
+      
+      const realCertificates = allCertificates?.filter(c => !testUserIds.includes(c.user_id)) || [];
+      const certificates = realCertificates.length;
 
       // Use real visitor data from analytics if available
       const realVisitors = liveData?.summary?.visitors || 127;
@@ -158,33 +173,33 @@ export const useFunnelAnalytics = (liveData?: LiveAnalyticsData) => {
         },
         {
           name: "Signed Up",
-          value: totalProfiles || 0,
-          percentage: Math.round(((totalProfiles || 0) / realVisitors) * 100),
-          dropoff: Math.round((1 - (totalProfiles || 0) / realVisitors) * 100),
+          value: totalProfiles,
+          percentage: Math.round((totalProfiles / realVisitors) * 100),
+          dropoff: Math.round((1 - totalProfiles / realVisitors) * 100),
         },
         {
           name: "Enrolled in Course",
-          value: totalEnrollments || 0,
-          percentage: Math.round(((totalEnrollments || 0) / (totalProfiles || 1)) * 100),
-          dropoff: Math.round((1 - (totalEnrollments || 0) / (totalProfiles || 1)) * 100),
+          value: totalEnrollments,
+          percentage: Math.round((totalEnrollments / (totalProfiles || 1)) * 100),
+          dropoff: Math.round((1 - totalEnrollments / (totalProfiles || 1)) * 100),
         },
         {
           name: "Started Training",
-          value: startedEnrollments || 0,
-          percentage: Math.round(((startedEnrollments || 0) / (totalEnrollments || 1)) * 100),
-          dropoff: Math.round((1 - (startedEnrollments || 0) / (totalEnrollments || 1)) * 100),
+          value: startedEnrollments,
+          percentage: Math.round((startedEnrollments / (totalEnrollments || 1)) * 100),
+          dropoff: Math.round((1 - startedEnrollments / (totalEnrollments || 1)) * 100),
         },
         {
           name: "Completed Course",
-          value: completedEnrollments || 0,
-          percentage: Math.round(((completedEnrollments || 0) / (startedEnrollments || 1)) * 100),
-          dropoff: Math.round((1 - (completedEnrollments || 0) / (startedEnrollments || 1)) * 100),
+          value: completedEnrollments,
+          percentage: Math.round((completedEnrollments / (startedEnrollments || 1)) * 100),
+          dropoff: Math.round((1 - completedEnrollments / (startedEnrollments || 1)) * 100),
         },
         {
           name: "Received Certificate",
-          value: certificates || 0,
-          percentage: Math.round(((certificates || 0) / (completedEnrollments || 1)) * 100),
-          dropoff: Math.round((1 - (certificates || 0) / (completedEnrollments || 1)) * 100),
+          value: certificates,
+          percentage: Math.round((certificates / (completedEnrollments || 1)) * 100),
+          dropoff: Math.round((1 - certificates / (completedEnrollments || 1)) * 100),
         },
       ];
 
@@ -192,7 +207,6 @@ export const useFunnelAnalytics = (liveData?: LiveAnalyticsData) => {
     },
   });
 };
-
 // Generate insights based on funnel data and live analytics
 export const useTrafficInsights = (funnelData?: FunnelStep[], liveData?: LiveAnalyticsData) => {
   return useQuery({
