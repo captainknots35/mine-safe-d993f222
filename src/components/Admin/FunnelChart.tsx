@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingDown, ArrowRight } from "lucide-react";
@@ -9,6 +10,8 @@ interface FunnelChartProps {
 }
 
 export const FunnelChart = ({ data, isLoading }: FunnelChartProps) => {
+  const navigate = useNavigate();
+
   if (isLoading) {
     return (
       <Card>
@@ -28,6 +31,15 @@ export const FunnelChart = ({ data, isLoading }: FunnelChartProps) => {
 
   const maxValue = data[0]?.value || 1;
 
+  const handleStepClick = (stepName: string) => {
+    // Only "Signed Up" navigates to users page
+    if (stepName === "Signed Up") {
+      navigate("/admin/users");
+    }
+  };
+
+  const isClickable = (stepName: string) => stepName === "Signed Up";
+
   return (
     <Card>
       <CardHeader>
@@ -42,6 +54,7 @@ export const FunnelChart = ({ data, isLoading }: FunnelChartProps) => {
           {data.map((step, index) => {
             const widthPercentage = Math.max((step.value / maxValue) * 100, 10);
             const isLast = index === data.length - 1;
+            const clickable = isClickable(step.name);
             
             return (
               <div key={step.name} className="relative">
@@ -49,11 +62,21 @@ export const FunnelChart = ({ data, isLoading }: FunnelChartProps) => {
                   {/* Funnel bar */}
                   <div className="flex-1">
                     <div
-                      className="relative h-12 rounded-lg transition-all duration-500 flex items-center justify-between px-4"
+                      className={`relative h-12 rounded-lg transition-all duration-500 flex items-center justify-between px-4 ${
+                        clickable ? "cursor-pointer hover:ring-2 hover:ring-primary hover:ring-offset-2" : ""
+                      }`}
                       style={{
                         width: `${widthPercentage}%`,
                         background: `linear-gradient(90deg, hsl(var(--primary) / ${0.3 + (index * 0.1)}) 0%, hsl(var(--primary) / ${0.5 + (index * 0.1)}) 100%)`,
                         marginLeft: `${(100 - widthPercentage) / 2}%`,
+                      }}
+                      onClick={() => handleStepClick(step.name)}
+                      role={clickable ? "button" : undefined}
+                      tabIndex={clickable ? 0 : undefined}
+                      onKeyDown={(e) => {
+                        if (clickable && (e.key === "Enter" || e.key === " ")) {
+                          handleStepClick(step.name);
+                        }
                       }}
                     >
                       <span className="text-sm font-medium text-foreground truncate">
