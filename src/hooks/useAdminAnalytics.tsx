@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, eachDayOfInterval, subDays, differenceInDays } from "date-fns";
+import { isTestAccount } from "@/utils/testAccountFilter";
 
 export interface DateRangeParams {
   startDate: Date;
@@ -37,12 +38,15 @@ export const useSignupTrend = (dateRange: DateRangeParams) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("created_at")
+        .select("created_at, email")
         .gte("created_at", dateRange.startDate.toISOString())
         .lte("created_at", dateRange.endDate.toISOString())
         .order("created_at", { ascending: true });
 
       if (error) throw error;
+
+      // Filter out test accounts
+      const filteredData = data?.filter(profile => !isTestAccount(profile.email)) || [];
 
       // Create date buckets
       const dateRangeInterval = eachDayOfInterval({
@@ -55,8 +59,8 @@ export const useSignupTrend = (dateRange: DateRangeParams) => {
         signupsByDate[format(date, "yyyy-MM-dd")] = 0;
       });
 
-      // Count signups per day
-      data?.forEach((profile) => {
+      // Count signups per day (excluding test accounts)
+      filteredData.forEach((profile) => {
         const date = format(new Date(profile.created_at!), "yyyy-MM-dd");
         if (signupsByDate[date] !== undefined) {
           signupsByDate[date]++;
@@ -79,14 +83,26 @@ export const useEnrollmentTrend = (dateRange: DateRangeParams) => {
   return useQuery({
     queryKey: ["admin-enrollment-trend", dateRange.startDate.toISOString(), dateRange.endDate.toISOString()],
     queryFn: async () => {
+      // First get test account user IDs to exclude
+      const { data: testProfiles } = await supabase
+        .from("profiles")
+        .select("id, email");
+      
+      const testUserIds = testProfiles
+        ?.filter(p => isTestAccount(p.email))
+        .map(p => p.id) || [];
+
       const { data: enrollments, error: enrollError } = await supabase
         .from("enrollments")
-        .select("enrolled_at, completed_at, status")
+        .select("enrolled_at, completed_at, status, user_id")
         .gte("enrolled_at", dateRange.startDate.toISOString())
         .lte("enrolled_at", dateRange.endDate.toISOString())
         .order("enrolled_at", { ascending: true });
 
       if (enrollError) throw enrollError;
+
+      // Filter out test account enrollments
+      const filteredEnrollments = enrollments?.filter(e => !testUserIds.includes(e.user_id)) || [];
 
       const dateRangeInterval = eachDayOfInterval({
         start: dateRange.startDate,
@@ -98,7 +114,7 @@ export const useEnrollmentTrend = (dateRange: DateRangeParams) => {
         enrollmentsByDate[format(date, "yyyy-MM-dd")] = { count: 0, completions: 0 };
       });
 
-      enrollments?.forEach((enrollment) => {
+      filteredEnrollments.forEach((enrollment) => {
         const enrollDate = format(new Date(enrollment.enrolled_at!), "yyyy-MM-dd");
         if (enrollmentsByDate[enrollDate]) {
           enrollmentsByDate[enrollDate].count++;
@@ -128,6 +144,15 @@ export const useCourseStats = () => {
   return useQuery({
     queryKey: ["admin-course-stats"],
     queryFn: async () => {
+      // First get test account user IDs to exclude
+      const { data: testProfiles } = await supabase
+        .from("profiles")
+        .select("id, email");
+      
+      const testUserIds = testProfiles
+        ?.filter(p => isTestAccount(p.email))
+        .map(p => p.id) || [];
+
       const { data: courses, error: coursesError } = await supabase
         .from("courses")
         .select("id, title")
@@ -137,12 +162,15 @@ export const useCourseStats = () => {
 
       const { data: enrollments, error: enrollError } = await supabase
         .from("enrollments")
-        .select("course_id, status");
+        .select("course_id, status, user_id");
 
       if (enrollError) throw enrollError;
 
+      // Filter out test account enrollments
+      const filteredEnrollments = enrollments?.filter(e => !testUserIds.includes(e.user_id)) || [];
+
       const stats: CourseStats[] = courses?.map((course) => {
-        const courseEnrollments = enrollments?.filter((e) => e.course_id === course.id) || [];
+        const courseEnrollments = filteredEnrollments.filter((e) => e.course_id === course.id);
         const completions = courseEnrollments.filter((e) => e.status === "completed").length;
         const total = courseEnrollments.length;
 
@@ -164,14 +192,26 @@ export const useRoleDistribution = () => {
   return useQuery({
     queryKey: ["admin-role-distribution"],
     queryFn: async () => {
+      // First get test account user IDs to exclude
+      const { data: testProfiles } = await supabase
+        .from("profiles")
+        .select("id, email");
+      
+      const testUserIds = testProfiles
+        ?.filter(p => isTestAccount(p.email))
+        .map(p => p.id) || [];
+
       const { data, error } = await supabase
         .from("user_roles")
-        .select("role");
+        .select("role, user_id");
 
       if (error) throw error;
 
+      // Filter out test account roles
+      const filteredData = data?.filter(r => !testUserIds.includes(r.user_id)) || [];
+
       const distribution: Record<string, number> = {};
-      data?.forEach((item) => {
+      filteredData.forEach((item) => {
         distribution[item.role] = (distribution[item.role] || 0) + 1;
       });
 
@@ -191,37 +231,49 @@ export const useOverviewStats = (dateRange: DateRangeParams) => {
       const previousStart = subDays(dateRange.startDate, days);
       const previousEnd = subDays(dateRange.endDate, days);
 
-      // Total users
-      const { count: totalUsers } = await supabase
+      // First get test account user IDs to exclude
+      const { data: testProfiles } = await supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true });
+        .select("id, email");
+      
+      const testUserIds = testProfiles
+        ?.filter(p => isTestAccount(p.email))
+        .map(p => p.id) || [];
+
+      // Get all profiles and filter out test accounts
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("id, email, created_at");
+      
+      const realProfiles = allProfiles?.filter(p => !isTestAccount(p.email)) || [];
+      const totalUsers = realProfiles.length;
 
       // New users in selected period
-      const { count: newUsersInPeriod } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", dateRange.startDate.toISOString())
-        .lte("created_at", dateRange.endDate.toISOString());
+      const newUsersInPeriod = realProfiles.filter(p => {
+        const createdAt = new Date(p.created_at!);
+        return createdAt >= dateRange.startDate && createdAt <= dateRange.endDate;
+      }).length;
 
       // New users in previous period (for comparison)
-      const { count: newUsersPreviousPeriod } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .gte("created_at", previousStart.toISOString())
-        .lt("created_at", previousEnd.toISOString());
+      const newUsersPreviousPeriod = realProfiles.filter(p => {
+        const createdAt = new Date(p.created_at!);
+        return createdAt >= previousStart && createdAt < previousEnd;
+      }).length;
 
-      // Total enrollments
-      const { count: totalEnrollments } = await supabase
+      // Get all enrollments and filter out test accounts
+      const { data: allEnrollments } = await supabase
         .from("enrollments")
-        .select("*", { count: "exact", head: true });
+        .select("user_id, status, completed_at");
+      
+      const realEnrollments = allEnrollments?.filter(e => !testUserIds.includes(e.user_id)) || [];
+      const totalEnrollments = realEnrollments.length;
 
       // Completions in selected period
-      const { count: completionsInPeriod } = await supabase
-        .from("enrollments")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "completed")
-        .gte("completed_at", dateRange.startDate.toISOString())
-        .lte("completed_at", dateRange.endDate.toISOString());
+      const completionsInPeriod = realEnrollments.filter(e => {
+        if (e.status !== "completed" || !e.completed_at) return false;
+        const completedAt = new Date(e.completed_at);
+        return completedAt >= dateRange.startDate && completedAt <= dateRange.endDate;
+      }).length;
 
       // Active courses
       const { count: activeCourses } = await supabase
@@ -230,16 +282,16 @@ export const useOverviewStats = (dateRange: DateRangeParams) => {
         .eq("is_active", true);
 
       // Calculate growth percentage
-      const userGrowth = newUsersPreviousPeriod && newUsersPreviousPeriod > 0
-        ? Math.round(((newUsersInPeriod || 0) - newUsersPreviousPeriod) / newUsersPreviousPeriod * 100)
+      const userGrowth = newUsersPreviousPeriod > 0
+        ? Math.round((newUsersInPeriod - newUsersPreviousPeriod) / newUsersPreviousPeriod * 100)
         : newUsersInPeriod ? 100 : 0;
 
       return {
-        totalUsers: totalUsers || 0,
-        newUsersInPeriod: newUsersInPeriod || 0,
+        totalUsers,
+        newUsersInPeriod,
         userGrowth,
-        totalEnrollments: totalEnrollments || 0,
-        completionsInPeriod: completionsInPeriod || 0,
+        totalEnrollments,
+        completionsInPeriod,
         activeCourses: activeCourses || 0,
         days,
       };
