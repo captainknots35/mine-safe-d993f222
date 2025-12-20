@@ -5,6 +5,7 @@ import { Header } from "@/components/Layout/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { subDays } from "date-fns";
 import { 
   Users, 
@@ -12,7 +13,11 @@ import {
   TrendingUp, 
   BookOpen,
   Award,
-  UserPlus
+  UserPlus,
+  BarChart3,
+  Eye,
+  Clock,
+  MousePointerClick
 } from "lucide-react";
 import {
   LineChart,
@@ -39,7 +44,11 @@ import {
   useOverviewStats,
   DateRangeParams,
 } from "@/hooks/useAdminAnalytics";
+import { useFunnelAnalytics, useTrafficInsights } from "@/hooks/useTrafficAnalytics";
 import { DateRangeSelector, DateRangePreset, DateRange } from "@/components/Admin/DateRangeSelector";
+import { FunnelChart } from "@/components/Admin/FunnelChart";
+import { InsightsPanel } from "@/components/Admin/InsightsPanel";
+import { TrafficBreakdownCards } from "@/components/Admin/TrafficBreakdownCards";
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
@@ -111,6 +120,8 @@ const AdminDashboard = () => {
   const { data: enrollmentTrend, isLoading: enrollmentLoading } = useEnrollmentTrend(dateRange);
   const { data: courseStats, isLoading: courseLoading } = useCourseStats();
   const { data: roleDistribution, isLoading: roleLoading } = useRoleDistribution();
+  const { data: funnelData, isLoading: funnelLoading } = useFunnelAnalytics();
+  const { data: trafficInsights, isLoading: insightsLoading } = useTrafficInsights(funnelData);
 
   useEffect(() => {
     if (!loading && (!user || userRole !== "admin")) {
@@ -402,6 +413,107 @@ const AdminDashboard = () => {
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Traffic Analytics Section */}
+          <div className="mt-8">
+            <Tabs defaultValue="funnel" className="w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Traffic & Engagement Analytics</h2>
+                <TabsList>
+                  <TabsTrigger value="funnel">Funnel</TabsTrigger>
+                  <TabsTrigger value="traffic">Traffic</TabsTrigger>
+                  <TabsTrigger value="insights">Insights</TabsTrigger>
+                </TabsList>
+              </div>
+
+              <TabsContent value="funnel" className="mt-0">
+                <FunnelChart data={funnelData || []} isLoading={funnelLoading} />
+              </TabsContent>
+
+              <TabsContent value="traffic" className="mt-0">
+                {/* Traffic Metrics Summary */}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Eye className="h-4 w-4" />
+                        <span className="text-xs">Visitors</span>
+                      </div>
+                      <p className="text-2xl font-bold">40</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <BarChart3 className="h-4 w-4" />
+                        <span className="text-xs">Pageviews</span>
+                      </div>
+                      <p className="text-2xl font-bold">126</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <MousePointerClick className="h-4 w-4" />
+                        <span className="text-xs">Views/Visit</span>
+                      </div>
+                      <p className="text-2xl font-bold">3.15</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-xs">Avg Duration</span>
+                      </div>
+                      <p className="text-2xl font-bold">2m 53s</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-xs">Bounce Rate</span>
+                      </div>
+                      <p className="text-2xl font-bold">42%</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <TrafficBreakdownCards
+                  sources={[
+                    { label: "Direct", value: 21, percentage: 52 },
+                    { label: "Google", value: 8, percentage: 20 },
+                    { label: "LinkedIn (Mobile)", value: 7, percentage: 17 },
+                    { label: "LinkedIn (Web)", value: 6, percentage: 15 },
+                    { label: "Facebook", value: 2, percentage: 5 },
+                  ]}
+                  pages={[
+                    { label: "/", value: 23 },
+                    { label: "/blog", value: 21 },
+                    { label: "/courses", value: 6 },
+                    { label: "/auth", value: 6 },
+                    { label: "/blog/articles", value: 12 },
+                  ]}
+                  devices={[
+                    { label: "Mobile", value: 24, percentage: 60 },
+                    { label: "Desktop", value: 16, percentage: 40 },
+                  ]}
+                  countries={[
+                    { label: "United States", value: 34 },
+                    { label: "Australia", value: 3 },
+                    { label: "China", value: 2 },
+                    { label: "Peru", value: 1 },
+                  ]}
+                  isLoading={false}
+                />
+              </TabsContent>
+
+              <TabsContent value="insights" className="mt-0">
+                <InsightsPanel insights={trafficInsights || []} isLoading={insightsLoading} />
+              </TabsContent>
+            </Tabs>
           </div>
         </main>
       </div>
