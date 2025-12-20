@@ -44,7 +44,7 @@ import {
   useOverviewStats,
   DateRangeParams,
 } from "@/hooks/useAdminAnalytics";
-import { useFunnelAnalytics, useTrafficInsights } from "@/hooks/useTrafficAnalytics";
+import { useFunnelAnalytics, useTrafficInsights, useLiveAnalytics, usePageAnalytics, useSourceAnalytics } from "@/hooks/useTrafficAnalytics";
 import { DateRangeSelector, DateRangePreset, DateRange } from "@/components/Admin/DateRangeSelector";
 import { FunnelChart } from "@/components/Admin/FunnelChart";
 import { InsightsPanel } from "@/components/Admin/InsightsPanel";
@@ -120,8 +120,20 @@ const AdminDashboard = () => {
   const { data: enrollmentTrend, isLoading: enrollmentLoading } = useEnrollmentTrend(dateRange);
   const { data: courseStats, isLoading: courseLoading } = useCourseStats();
   const { data: roleDistribution, isLoading: roleLoading } = useRoleDistribution();
-  const { data: funnelData, isLoading: funnelLoading } = useFunnelAnalytics();
-  const { data: trafficInsights, isLoading: insightsLoading } = useTrafficInsights(funnelData);
+  
+  // Live analytics data
+  const { data: liveAnalytics, isLoading: liveAnalyticsLoading } = useLiveAnalytics(dateRange.startDate, dateRange.endDate);
+  const { data: funnelData, isLoading: funnelLoading } = useFunnelAnalytics(liveAnalytics);
+  const { data: trafficInsights, isLoading: insightsLoading } = useTrafficInsights(funnelData, liveAnalytics);
+  const { data: pageAnalytics, isLoading: pageLoading } = usePageAnalytics(liveAnalytics);
+  const { data: sourceAnalytics, isLoading: sourceLoading } = useSourceAnalytics(liveAnalytics);
+
+  // Helper function to format session duration
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}m ${secs}s`;
+  };
 
   useEffect(() => {
     if (!loading && (!user || userRole !== "admin")) {
@@ -440,7 +452,11 @@ const AdminDashboard = () => {
                         <Eye className="h-4 w-4" />
                         <span className="text-xs">Visitors</span>
                       </div>
-                      <p className="text-2xl font-bold">40</p>
+                      {liveAnalyticsLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{liveAnalytics?.summary?.visitors || 0}</p>
+                      )}
                     </CardContent>
                   </Card>
                   <Card>
@@ -449,7 +465,11 @@ const AdminDashboard = () => {
                         <BarChart3 className="h-4 w-4" />
                         <span className="text-xs">Pageviews</span>
                       </div>
-                      <p className="text-2xl font-bold">126</p>
+                      {liveAnalyticsLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{liveAnalytics?.summary?.pageviews || 0}</p>
+                      )}
                     </CardContent>
                   </Card>
                   <Card>
@@ -458,7 +478,11 @@ const AdminDashboard = () => {
                         <MousePointerClick className="h-4 w-4" />
                         <span className="text-xs">Views/Visit</span>
                       </div>
-                      <p className="text-2xl font-bold">3.15</p>
+                      {liveAnalyticsLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{liveAnalytics?.summary?.pageviewsPerVisit?.toFixed(2) || 0}</p>
+                      )}
                     </CardContent>
                   </Card>
                   <Card>
@@ -467,7 +491,11 @@ const AdminDashboard = () => {
                         <Clock className="h-4 w-4" />
                         <span className="text-xs">Avg Duration</span>
                       </div>
-                      <p className="text-2xl font-bold">2m 53s</p>
+                      {liveAnalyticsLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{formatDuration(liveAnalytics?.summary?.avgSessionDuration || 0)}</p>
+                      )}
                     </CardContent>
                   </Card>
                   <Card>
@@ -476,37 +504,35 @@ const AdminDashboard = () => {
                         <TrendingUp className="h-4 w-4" />
                         <span className="text-xs">Bounce Rate</span>
                       </div>
-                      <p className="text-2xl font-bold">42%</p>
+                      {liveAnalyticsLoading ? (
+                        <Skeleton className="h-8 w-16" />
+                      ) : (
+                        <p className="text-2xl font-bold">{liveAnalytics?.summary?.bounceRate || 0}%</p>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
 
                 <TrafficBreakdownCards
-                  sources={[
-                    { label: "Direct", value: 21, percentage: 52 },
-                    { label: "Google", value: 8, percentage: 20 },
-                    { label: "LinkedIn (Mobile)", value: 7, percentage: 17 },
-                    { label: "LinkedIn (Web)", value: 6, percentage: 15 },
-                    { label: "Facebook", value: 2, percentage: 5 },
-                  ]}
-                  pages={[
-                    { label: "/", value: 23 },
-                    { label: "/blog", value: 21 },
-                    { label: "/courses", value: 6 },
-                    { label: "/auth", value: 6 },
-                    { label: "/blog/articles", value: 12 },
-                  ]}
-                  devices={[
-                    { label: "Mobile", value: 24, percentage: 60 },
-                    { label: "Desktop", value: 16, percentage: 40 },
-                  ]}
-                  countries={[
-                    { label: "United States", value: 34 },
-                    { label: "Australia", value: 3 },
-                    { label: "China", value: 2 },
-                    { label: "Peru", value: 1 },
-                  ]}
-                  isLoading={false}
+                  sources={(sourceAnalytics || []).map(s => ({ 
+                    label: s.source, 
+                    value: s.visitors, 
+                    percentage: s.percentage 
+                  }))}
+                  pages={(pageAnalytics || []).map(p => ({ 
+                    label: p.page, 
+                    value: p.visitors 
+                  }))}
+                  devices={(liveAnalytics?.devices || []).map(d => ({ 
+                    label: d.device, 
+                    value: d.visitors, 
+                    percentage: d.percentage 
+                  }))}
+                  countries={(liveAnalytics?.countries || []).map(c => ({ 
+                    label: c.country, 
+                    value: c.visitors 
+                  }))}
+                  isLoading={liveAnalyticsLoading || pageLoading || sourceLoading}
                 />
               </TabsContent>
 
