@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, subMonths, format, eachDayOfInterval, subDays } from "date-fns";
+import { format, eachDayOfInterval, subDays, differenceInDays } from "date-fns";
+
+export interface DateRangeParams {
+  startDate: Date;
+  endDate: Date;
+}
 
 export interface DailySignup {
   date: string;
@@ -26,28 +31,27 @@ export interface RoleDistribution {
   count: number;
 }
 
-export const useSignupTrend = (days: number = 30) => {
+export const useSignupTrend = (dateRange: DateRangeParams) => {
   return useQuery({
-    queryKey: ["admin-signup-trend", days],
+    queryKey: ["admin-signup-trend", dateRange.startDate.toISOString(), dateRange.endDate.toISOString()],
     queryFn: async () => {
-      const startDate = subDays(new Date(), days);
-      
       const { data, error } = await supabase
         .from("profiles")
         .select("created_at")
-        .gte("created_at", startDate.toISOString())
+        .gte("created_at", dateRange.startDate.toISOString())
+        .lte("created_at", dateRange.endDate.toISOString())
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
       // Create date buckets
-      const dateRange = eachDayOfInterval({
-        start: startDate,
-        end: new Date(),
+      const dateRangeInterval = eachDayOfInterval({
+        start: dateRange.startDate,
+        end: dateRange.endDate,
       });
 
       const signupsByDate: Record<string, number> = {};
-      dateRange.forEach((date) => {
+      dateRangeInterval.forEach((date) => {
         signupsByDate[format(date, "yyyy-MM-dd")] = 0;
       });
 
@@ -59,35 +63,38 @@ export const useSignupTrend = (days: number = 30) => {
         }
       });
 
+      // Use shorter date format for longer ranges
+      const days = differenceInDays(dateRange.endDate, dateRange.startDate);
+      const dateFormat = days > 30 ? "MMM d" : "MMM d";
+
       return Object.entries(signupsByDate).map(([date, count]) => ({
-        date: format(new Date(date), "MMM d"),
+        date: format(new Date(date), dateFormat),
         count,
       })) as DailySignup[];
     },
   });
 };
 
-export const useEnrollmentTrend = (days: number = 30) => {
+export const useEnrollmentTrend = (dateRange: DateRangeParams) => {
   return useQuery({
-    queryKey: ["admin-enrollment-trend", days],
+    queryKey: ["admin-enrollment-trend", dateRange.startDate.toISOString(), dateRange.endDate.toISOString()],
     queryFn: async () => {
-      const startDate = subDays(new Date(), days);
-
       const { data: enrollments, error: enrollError } = await supabase
         .from("enrollments")
         .select("enrolled_at, completed_at, status")
-        .gte("enrolled_at", startDate.toISOString())
+        .gte("enrolled_at", dateRange.startDate.toISOString())
+        .lte("enrolled_at", dateRange.endDate.toISOString())
         .order("enrolled_at", { ascending: true });
 
       if (enrollError) throw enrollError;
 
-      const dateRange = eachDayOfInterval({
-        start: startDate,
-        end: new Date(),
+      const dateRangeInterval = eachDayOfInterval({
+        start: dateRange.startDate,
+        end: dateRange.endDate,
       });
 
       const enrollmentsByDate: Record<string, { count: number; completions: number }> = {};
-      dateRange.forEach((date) => {
+      dateRangeInterval.forEach((date) => {
         enrollmentsByDate[format(date, "yyyy-MM-dd")] = { count: 0, completions: 0 };
       });
 
@@ -105,8 +112,11 @@ export const useEnrollmentTrend = (days: number = 30) => {
         }
       });
 
+      const days = differenceInDays(dateRange.endDate, dateRange.startDate);
+      const dateFormat = days > 30 ? "MMM d" : "MMM d";
+
       return Object.entries(enrollmentsByDate).map(([date, data]) => ({
-        date: format(new Date(date), "MMM d"),
+        date: format(new Date(date), dateFormat),
         count: data.count,
         completions: data.completions,
       })) as DailyEnrollment[];
@@ -173,43 +183,45 @@ export const useRoleDistribution = () => {
   });
 };
 
-export const useOverviewStats = () => {
+export const useOverviewStats = (dateRange: DateRangeParams) => {
   return useQuery({
-    queryKey: ["admin-overview-stats"],
+    queryKey: ["admin-overview-stats", dateRange.startDate.toISOString(), dateRange.endDate.toISOString()],
     queryFn: async () => {
-      const now = new Date();
-      const thirtyDaysAgo = subDays(now, 30);
-      const sixtyDaysAgo = subDays(now, 60);
+      const days = differenceInDays(dateRange.endDate, dateRange.startDate);
+      const previousStart = subDays(dateRange.startDate, days);
+      const previousEnd = subDays(dateRange.endDate, days);
 
       // Total users
       const { count: totalUsers } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true });
 
-      // New users this month
-      const { count: newUsersThisMonth } = await supabase
+      // New users in selected period
+      const { count: newUsersInPeriod } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
-        .gte("created_at", thirtyDaysAgo.toISOString());
+        .gte("created_at", dateRange.startDate.toISOString())
+        .lte("created_at", dateRange.endDate.toISOString());
 
-      // New users last month (for comparison)
-      const { count: newUsersLastMonth } = await supabase
+      // New users in previous period (for comparison)
+      const { count: newUsersPreviousPeriod } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
-        .gte("created_at", sixtyDaysAgo.toISOString())
-        .lt("created_at", thirtyDaysAgo.toISOString());
+        .gte("created_at", previousStart.toISOString())
+        .lt("created_at", previousEnd.toISOString());
 
       // Total enrollments
       const { count: totalEnrollments } = await supabase
         .from("enrollments")
         .select("*", { count: "exact", head: true });
 
-      // Completions this month
-      const { count: completionsThisMonth } = await supabase
+      // Completions in selected period
+      const { count: completionsInPeriod } = await supabase
         .from("enrollments")
         .select("*", { count: "exact", head: true })
         .eq("status", "completed")
-        .gte("completed_at", thirtyDaysAgo.toISOString());
+        .gte("completed_at", dateRange.startDate.toISOString())
+        .lte("completed_at", dateRange.endDate.toISOString());
 
       // Active courses
       const { count: activeCourses } = await supabase
@@ -218,17 +230,18 @@ export const useOverviewStats = () => {
         .eq("is_active", true);
 
       // Calculate growth percentage
-      const userGrowth = newUsersLastMonth && newUsersLastMonth > 0
-        ? Math.round(((newUsersThisMonth || 0) - newUsersLastMonth) / newUsersLastMonth * 100)
-        : newUsersThisMonth ? 100 : 0;
+      const userGrowth = newUsersPreviousPeriod && newUsersPreviousPeriod > 0
+        ? Math.round(((newUsersInPeriod || 0) - newUsersPreviousPeriod) / newUsersPreviousPeriod * 100)
+        : newUsersInPeriod ? 100 : 0;
 
       return {
         totalUsers: totalUsers || 0,
-        newUsersThisMonth: newUsersThisMonth || 0,
+        newUsersInPeriod: newUsersInPeriod || 0,
         userGrowth,
         totalEnrollments: totalEnrollments || 0,
-        completionsThisMonth: completionsThisMonth || 0,
+        completionsInPeriod: completionsInPeriod || 0,
         activeCourses: activeCourses || 0,
+        days,
       };
     },
   });

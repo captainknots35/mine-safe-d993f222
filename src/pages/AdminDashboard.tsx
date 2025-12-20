@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Header } from "@/components/Layout/Header";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { subDays } from "date-fns";
 import { 
   Users, 
   GraduationCap, 
@@ -36,7 +37,9 @@ import {
   useCourseStats,
   useRoleDistribution,
   useOverviewStats,
+  DateRangeParams,
 } from "@/hooks/useAdminAnalytics";
+import { DateRangeSelector, DateRangePreset, DateRange } from "@/components/Admin/DateRangeSelector";
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
@@ -81,9 +84,31 @@ const AdminDashboard = () => {
   const { user, userRole, loading } = useAuth();
   const navigate = useNavigate();
 
-  const { data: overviewStats, isLoading: overviewLoading } = useOverviewStats();
-  const { data: signupTrend, isLoading: signupLoading } = useSignupTrend(30);
-  const { data: enrollmentTrend, isLoading: enrollmentLoading } = useEnrollmentTrend(30);
+  // Date range state
+  const [preset, setPreset] = useState<DateRangePreset>("30d");
+  const [days, setDays] = useState(30);
+  const [customRange, setCustomRange] = useState<DateRange | undefined>();
+
+  const dateRange: DateRangeParams = useMemo(() => {
+    if (preset === "custom" && customRange) {
+      return { startDate: customRange.from, endDate: customRange.to };
+    }
+    return { startDate: subDays(new Date(), days), endDate: new Date() };
+  }, [preset, days, customRange]);
+
+  const handlePresetChange = (newPreset: DateRangePreset, newDays: number) => {
+    setPreset(newPreset);
+    setDays(newDays);
+  };
+
+  const handleCustomRangeChange = (range: DateRange) => {
+    setCustomRange(range);
+    setPreset("custom");
+  };
+
+  const { data: overviewStats, isLoading: overviewLoading } = useOverviewStats(dateRange);
+  const { data: signupTrend, isLoading: signupLoading } = useSignupTrend(dateRange);
+  const { data: enrollmentTrend, isLoading: enrollmentLoading } = useEnrollmentTrend(dateRange);
   const { data: courseStats, isLoading: courseLoading } = useCourseStats();
   const { data: roleDistribution, isLoading: roleLoading } = useRoleDistribution();
 
@@ -117,11 +142,20 @@ const AdminDashboard = () => {
         <Header userRole="admin" userName={profileName} />
 
         <main className="container px-4 py-8">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground mt-1">
-              Monitor user activity, enrollments, and platform metrics
-            </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+              <p className="text-muted-foreground mt-1">
+                Monitor user activity, enrollments, and platform metrics
+              </p>
+            </div>
+            <DateRangeSelector
+              days={days}
+              preset={preset}
+              customRange={customRange}
+              onPresetChange={handlePresetChange}
+              onCustomRangeChange={handleCustomRangeChange}
+            />
           </div>
 
           {/* Overview Stats */}
@@ -134,8 +168,8 @@ const AdminDashboard = () => {
               isLoading={overviewLoading}
             />
             <StatCard
-              title="New Users (30d)"
-              value={overviewStats?.newUsersThisMonth || 0}
+              title={`New Users (${overviewStats?.days || days}d)`}
+              value={overviewStats?.newUsersInPeriod || 0}
               description="vs previous period"
               icon={<UserPlus className="h-4 w-4" />}
               trend={overviewStats?.userGrowth}
@@ -149,8 +183,8 @@ const AdminDashboard = () => {
               isLoading={overviewLoading}
             />
             <StatCard
-              title="Completions (30d)"
-              value={overviewStats?.completionsThisMonth || 0}
+              title={`Completions (${overviewStats?.days || days}d)`}
+              value={overviewStats?.completionsInPeriod || 0}
               description="Courses completed"
               icon={<Award className="h-4 w-4" />}
               isLoading={overviewLoading}
@@ -162,11 +196,11 @@ const AdminDashboard = () => {
             {/* User Signups Chart */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  User Signups
-                </CardTitle>
-                <CardDescription>Daily new user registrations (last 30 days)</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                User Signups
+              </CardTitle>
+              <CardDescription>Daily new user registrations</CardDescription>
               </CardHeader>
               <CardContent>
                 {signupLoading ? (
@@ -217,11 +251,11 @@ const AdminDashboard = () => {
             {/* Enrollments & Completions Chart */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <GraduationCap className="h-5 w-5 text-primary" />
-                  Enrollments & Completions
-                </CardTitle>
-                <CardDescription>Daily activity (last 30 days)</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                Enrollments & Completions
+              </CardTitle>
+              <CardDescription>Daily activity</CardDescription>
               </CardHeader>
               <CardContent>
                 {enrollmentLoading ? (
