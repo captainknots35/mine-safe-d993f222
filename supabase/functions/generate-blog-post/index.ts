@@ -988,19 +988,16 @@ Output JSON:
     // Generate embedding for the final content
     const contentEmbedding = await generateEmbedding(`${outline.title} ${excerpt}`, LOVABLE_API_KEY);
 
-    // Determine status based on confidence score AND human review flag
-    // Posts with critical issues or low confidence are saved as draft
-    const status = (confidenceScore >= 85 && !requiresReview) ? 'published' : 'draft';
-    if (status === 'draft') {
-      console.log(`=== FLAGGED FOR REVIEW ===`);
-      console.log(`Confidence: ${confidenceScore}, Requires Review: ${requiresReview}`);
-      console.log(`Regulatory Accuracy: ${regulatoryAccuracy}, Safety Accuracy: ${safetyAccuracy}`);
-      if (auditIssues.length > 0) {
-        console.log(`Issues requiring attention:`);
-        auditIssues.forEach((issue: any, i: number) => {
-          console.log(`  ${i + 1}. [${issue.severity}] ${issue.description}`);
-        });
-      }
+    // HUMAN-IN-THE-LOOP: All posts are saved as draft and require manual publishing
+    const status = 'draft';
+    console.log(`=== SAVED AS DRAFT (Requires Manual Publishing) ===`);
+    console.log(`Confidence: ${confidenceScore}, Requires Review: ${requiresReview}`);
+    console.log(`Regulatory Accuracy: ${regulatoryAccuracy}, Safety Accuracy: ${safetyAccuracy}`);
+    if (auditIssues.length > 0) {
+      console.log(`Issues requiring attention:`);
+      auditIssues.forEach((issue: any, i: number) => {
+        console.log(`  ${i + 1}. [${issue.severity}] ${issue.description}`);
+      });
     }
 
     // Insert into database with enhanced accuracy metadata
