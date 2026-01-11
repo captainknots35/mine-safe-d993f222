@@ -184,6 +184,7 @@ const Dashboard = () => {
                     status={mapEnrollmentStatus(enrollment.status)}
                     isEnrolled={true}
                     userRole={validUserRole}
+                    onManage={() => navigate(`/course/${enrollment.course_id}`)}
                     onContinue={() => {
                       if (enrollment.status === 'not_started') {
                         handleStartCourse(enrollment.id);
