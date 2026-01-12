@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link, useSearchParams, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +9,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { Loader2, HardHat, ArrowLeft } from 'lucide-react';
 
 export default function Auth() {
+  const { t } = useTranslation();
   const { user, loading, signIn, signUp, resetPassword } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
@@ -61,8 +64,8 @@ export default function Auth() {
     
     if (newPassword !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same.",
+        title: t('auth.passwordMismatch'),
+        description: t('auth.passwordMismatch'),
         variant: "destructive"
       });
       return;
@@ -70,8 +73,8 @@ export default function Auth() {
 
     if (newPassword.length < 6) {
       toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters.",
+        title: t('auth.passwordTooShort'),
+        description: t('auth.passwordMinLength'),
         variant: "destructive"
       });
       return;
@@ -83,14 +86,14 @@ export default function Auth() {
 
     if (error) {
       toast({
-        title: "Password update failed",
+        title: t('auth.passwordUpdateFailed'),
         description: error.message,
         variant: "destructive"
       });
     } else {
       toast({
-        title: "Password updated!",
-        description: "Your password has been successfully changed. You can now sign in."
+        title: t('auth.passwordUpdated'),
+        description: t('auth.passwordUpdatedDesc')
       });
       setIsRecoveryMode(false);
       setNewPassword('');
@@ -161,39 +164,39 @@ export default function Auth() {
             <div className="flex items-center justify-center mb-4">
               <HardHat className="h-12 w-12 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">MSHA Training Platform</h1>
-            <p className="text-gray-600 mt-2">Set your new password</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t('auth.platformTitle')}</h1>
+            <p className="text-gray-600 mt-2">{t('auth.setNewPassword')}</p>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Reset Your Password</CardTitle>
+              <CardTitle>{t('auth.resetYourPassword')}</CardTitle>
               <CardDescription>
-                Enter your new password below.
+                {t('auth.enterNewPassword')}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
+                  <Label htmlFor="new-password">{t('auth.newPassword')}</Label>
                   <Input
                     id="new-password"
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password"
+                    placeholder={t('auth.newPassword')}
                     required
                     minLength={6}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Label htmlFor="confirm-password">{t('auth.confirmPassword')}</Label>
                   <Input
                     id="confirm-password"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm new password"
+                    placeholder={t('auth.confirmPassword')}
                     required
                     minLength={6}
                   />
@@ -206,10 +209,10 @@ export default function Auth() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating Password...
+                      {t('auth.updatingPassword')}
                     </>
                   ) : (
-                    'Update Password'
+                    t('auth.updatePassword')
                   )}
                 </Button>
                 <Button
@@ -218,7 +221,7 @@ export default function Auth() {
                   className="w-full"
                   onClick={() => setIsRecoveryMode(false)}
                 >
-                  Back to Sign In
+                  {t('auth.backToSignIn')}
                 </Button>
               </form>
             </CardContent>
@@ -231,43 +234,44 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-orange-50 p-4">
       <div className="w-full max-w-md">
-        <div className="mb-4">
+        <div className="mb-4 flex justify-between items-center">
           <Button variant="ghost" size="sm" asChild>
             <Link to="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
+              {t('common.backToHome')}
             </Link>
           </Button>
+          <LanguageSwitcher variant="minimal" />
         </div>
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <HardHat className="h-12 w-12 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">MSHA Training Platform</h1>
-          <p className="text-gray-600 mt-2">Professional mining safety training and certification</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t('auth.platformTitle')}</h1>
+          <p className="text-gray-600 mt-2">{t('auth.platformDescription')}</p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Access Your Training</CardTitle>
+            <CardTitle>{t('auth.accessTraining')}</CardTitle>
             <CardDescription>
-              Sign in to continue your training or create a new account.<br/>
+              {t('auth.accessDescription')}<br/>
               <span className="text-sm text-muted-foreground mt-2 block">
-                Don't have an account? Click "Sign Up" to create one first.
+                {t('auth.noAccountHint')}
               </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">{t('auth.signIn')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.signUp')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email">{t('auth.email')}</Label>
                     <Input
                       id="signin-email"
                       name="email"
@@ -277,7 +281,7 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password">{t('auth.password')}</Label>
                     <Input
                       id="signin-password"
                       name="password"
@@ -293,10 +297,10 @@ export default function Auth() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing In...
+                        {t('auth.signingIn')}
                       </>
                     ) : (
-                      'Sign In'
+                      t('auth.signIn')
                     )}
                   </Button>
                   <Button
@@ -305,17 +309,17 @@ export default function Auth() {
                     className="w-full text-sm"
                     onClick={() => setShowForgotPassword(true)}
                   >
-                    Forgot your password?
+                    {t('auth.forgotPassword')}
                   </Button>
                 </form>
 
                 {showForgotPassword && (
                   <div className="mt-4 p-4 border rounded-lg bg-muted/50">
-                    <h4 className="font-medium mb-2">Reset Password</h4>
+                    <h4 className="font-medium mb-2">{t('auth.resetPassword')}</h4>
                     <div className="space-y-2">
                       <Input
                         type="email"
-                        placeholder="Enter your email"
+                        placeholder={t('auth.email')}
                         value={resetEmail}
                         onChange={(e) => setResetEmail(e.target.value)}
                       />
@@ -333,7 +337,7 @@ export default function Auth() {
                           }}
                           disabled={isSubmitting || !resetEmail}
                         >
-                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
+                          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : t('auth.sendResetLink')}
                         </Button>
                         <Button
                           size="sm"
@@ -343,7 +347,7 @@ export default function Auth() {
                             setResetEmail('');
                           }}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </Button>
                       </div>
                     </div>
@@ -355,7 +359,7 @@ export default function Auth() {
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">{t('auth.firstName')}</Label>
                       <Input
                         id="firstName"
                         name="firstName"
@@ -364,7 +368,7 @@ export default function Auth() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">{t('auth.lastName')}</Label>
                       <Input
                         id="lastName"
                         name="lastName"
@@ -375,7 +379,7 @@ export default function Auth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
+                    <Label htmlFor="signup-email">{t('auth.email')}</Label>
                     <Input
                       id="signup-email"
                       name="email"
@@ -386,7 +390,7 @@ export default function Auth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="companyName">Company Name</Label>
+                    <Label htmlFor="companyName">{t('auth.companyName')}</Label>
                     <Input
                       id="companyName"
                       name="companyName"
@@ -396,7 +400,7 @@ export default function Auth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="jobTitle">Job Title</Label>
+                    <Label htmlFor="jobTitle">{t('auth.jobTitle')}</Label>
                     <Input
                       id="jobTitle"
                       name="jobTitle"
@@ -406,7 +410,7 @@ export default function Auth() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">{t('auth.password')}</Label>
                     <Input
                       id="signup-password"
                       name="password"
@@ -416,7 +420,7 @@ export default function Auth() {
                       minLength={6}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Must be at least 6 characters
+                      {t('auth.passwordMinLength')}
                     </p>
                   </div>
                   
@@ -428,10 +432,10 @@ export default function Auth() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Account...
+                        {t('auth.creatingAccount')}
                       </>
                     ) : (
-                      'Create Account'
+                      t('auth.signUp')
                     )}
                   </Button>
                 </form>

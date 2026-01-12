@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Header } from '@/components/Layout/Header';
 import { CourseCard } from '@/components/Courses/CourseCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Search, Filter, Clock, Users, Award, Loader2 } from 'lucide-react';
 
 export default function Courses() {
+  const { t } = useTranslation();
   const { user, userRole, profile } = useAuth();
   const { data: courses, isLoading } = useCourses();
   const enrollInCourse = useEnrollInCourse();
@@ -29,8 +31,8 @@ export default function Courses() {
     try {
       await enrollInCourse(courseId);
       toast({
-        title: "Enrolled successfully",
-        description: "You have been enrolled in the course and can start training."
+        title: t('courses.enrolled'),
+        description: t('courses.enrolled')
       });
       navigate('/dashboard');
     } catch (error: any) {
@@ -72,9 +74,9 @@ export default function Courses() {
       <main className="container mx-auto px-4 py-8 space-y-8">
         {/* Header Section */}
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold">MSHA Training Courses</h1>
+          <h1 className="text-4xl font-bold">{t('courses.title')}</h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Complete your mining safety training requirements with our MSHA-compliant courses
+            {t('courses.description')}
           </p>
         </div>
 
@@ -84,9 +86,9 @@ export default function Courses() {
             <div className="flex items-center gap-4">
               <Award className="h-8 w-8 text-primary" />
               <div>
-                <h3 className="text-lg font-semibold">Phase 1 Available: Part 46 Training</h3>
+                <h3 className="text-lg font-semibold">{t('courses.phase1Banner')}</h3>
                 <p className="text-muted-foreground">
-                  Surface mining safety training now available. Part 48 underground training coming soon with live virtual classrooms.
+                  {t('courses.phase1Description')}
                 </p>
               </div>
             </div>
@@ -98,7 +100,7 @@ export default function Courses() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search courses..."
+              placeholder={t('courses.searchPlaceholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -106,9 +108,9 @@ export default function Courses() {
           </div>
           <Tabs value={selectedType} onValueChange={(value) => setSelectedType(value as any)} className="w-auto">
             <TabsList>
-              <TabsTrigger value="all">All Courses</TabsTrigger>
-              <TabsTrigger value="Part 46">Part 46</TabsTrigger>
-              <TabsTrigger value="Part 48">Part 48</TabsTrigger>
+              <TabsTrigger value="all">{t('courses.allCourses')}</TabsTrigger>
+              <TabsTrigger value="Part 46">{t('courses.part46')}</TabsTrigger>
+              <TabsTrigger value="Part 48">{t('courses.part48')}</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -119,21 +121,21 @@ export default function Courses() {
             <CardHeader className="text-center">
               <Clock className="h-8 w-8 mx-auto text-primary mb-2" />
               <CardTitle className="text-2xl">{courses?.reduce((acc, course) => acc + course.duration_hours, 0) || 0}</CardTitle>
-              <p className="text-sm text-muted-foreground">Total Training Hours</p>
+              <p className="text-sm text-muted-foreground">{t('courses.totalTrainingHours')}</p>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="text-center">
               <Users className="h-8 w-8 mx-auto text-accent mb-2" />
               <CardTitle className="text-2xl">{filteredCourses.length}</CardTitle>
-              <p className="text-sm text-muted-foreground">Available Courses</p>
+              <p className="text-sm text-muted-foreground">{t('courses.availableCourses')}</p>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader className="text-center">
               <Award className="h-8 w-8 mx-auto text-success mb-2" />
               <CardTitle className="text-2xl">100%</CardTitle>
-              <p className="text-sm text-muted-foreground">MSHA Compliant</p>
+              <p className="text-sm text-muted-foreground">{t('courses.mshaCompliant')}</p>
             </CardHeader>
           </Card>
         </div>
@@ -142,9 +144,9 @@ export default function Courses() {
         <div className="grid gap-6">
           {filteredCourses.length === 0 ? (
             <Card className="p-8 text-center">
-              <p className="text-muted-foreground mb-4">No courses found matching your criteria.</p>
+              <p className="text-muted-foreground mb-4">{t('courses.noCoursesFound')}</p>
               <Button variant="outline" onClick={() => { setSearchTerm(''); setSelectedType('all'); }}>
-                Clear Filters
+                {t('common.clearFilters')}
               </Button>
             </Card>
           ) : (

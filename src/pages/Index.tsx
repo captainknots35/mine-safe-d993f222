@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +15,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, Navigate } from "react-router-dom";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import heroImage from "@/assets/mining-hero.jpg";
 
 const Index = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   // Redirect authenticated users to courses
   if (user) {
@@ -72,19 +75,20 @@ const Index = () => {
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-8 w-8 text-primary" />
             <div className="flex flex-col">
-              <span className="font-bold text-lg text-primary">MineSafe</span>
-              <span className="text-xs text-muted-foreground">MSHA Training Platform</span>
+              <span className="font-bold text-lg text-primary">{t('header.brand')}</span>
+              <span className="text-xs text-muted-foreground">{t('header.tagline')}</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <LanguageSwitcher variant="minimal" />
             <Button variant="ghost" asChild>
-              <Link to="/blog">Blog</Link>
+              <Link to="/blog">{t('nav.blog')}</Link>
             </Button>
             <Button variant="ghost" asChild>
-              <Link to="/auth">Sign In</Link>
+              <Link to="/auth">{t('nav.signIn')}</Link>
             </Button>
             <Button variant="safety" asChild>
-              <Link to="/auth">Get Started</Link>
+              <Link to="/auth">{t('common.getStarted')}</Link>
             </Button>
           </div>
         </div>
@@ -100,21 +104,20 @@ const Index = () => {
         />
         <div className="relative z-20 container mx-auto px-4 py-24 text-center text-white">
           <Badge variant="secondary" className="bg-white/20 text-white border-white/20 mb-6">
-            MSHA Certified Training Platform
+            {t('index.mshaCertified')}
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Professional Mining<br />Safety Training
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight whitespace-pre-line">
+            {t('index.heroTitle')}
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-3xl mx-auto">
-            Complete your MSHA Part 46 and Part 48 training requirements with our 
-            comprehensive, compliant digital platform featuring live instruction and verified certification.
+            {t('index.heroDescription')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="xl" variant="safety" className="text-lg" asChild>
-              <Link to="/auth">Start Training <ArrowRight className="ml-2 h-5 w-5" /></Link>
+              <Link to="/auth">{t('index.startTraining')} <ArrowRight className="ml-2 h-5 w-5" /></Link>
             </Button>
             <Button size="xl" variant="secondary" className="text-lg bg-white/20 hover:bg-white/30 text-white border-white/20" asChild>
-              <Link to="/courses">Learn More</Link>
+              <Link to="/courses">{t('common.learnMore')}</Link>
             </Button>
           </div>
         </div>
@@ -125,11 +128,10 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Complete MSHA Compliance Made Simple
+              {t('index.complianceTitle')}
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our platform meets all MSHA requirements while providing a modern, 
-              engaging learning experience for miners and instructors.
+              {t('index.complianceDescription')}
             </p>
           </div>
 
@@ -139,12 +141,11 @@ const Index = () => {
                 <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                   <HardHat className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle>MSHA Certified Curriculum</CardTitle>
+                <CardTitle>{t('index.certifiedCurriculum')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Comprehensive Part 46 and Part 48 training programs designed by safety experts 
-                  and approved by MSHA standards.
+                  {t('index.certifiedCurriculumDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -154,12 +155,11 @@ const Index = () => {
                 <div className="mx-auto w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-4">
                   <Users className="h-8 w-8 text-accent" />
                 </div>
-                <CardTitle>Live Virtual Classrooms</CardTitle>
+                <CardTitle>{t('index.liveClassrooms')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Interactive live sessions with certified instructors, featuring real-time 
-                  proctoring and identity verification for complete compliance.
+                  {t('index.liveClassroomsDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -169,12 +169,11 @@ const Index = () => {
                 <div className="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mb-4">
                   <Award className="h-8 w-8 text-success" />
                 </div>
-                <CardTitle>Verified Certification</CardTitle>
+                <CardTitle>{t('index.verifiedCertification')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Digital certificates with instructor signatures and complete audit trails 
-                  for MSHA compliance and mine site requirements.
+                  {t('index.verifiedCertificationDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -188,19 +187,19 @@ const Index = () => {
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold mb-2">1,200+</div>
-              <div className="text-primary-foreground/80">Miners Trained</div>
+              <div className="text-primary-foreground/80">{t('index.minersTrained')}</div>
             </div>
             <div>
               <div className="text-4xl font-bold mb-2">98%</div>
-              <div className="text-primary-foreground/80">Pass Rate</div>
+              <div className="text-primary-foreground/80">{t('index.passRate')}</div>
             </div>
             <div>
               <div className="text-4xl font-bold mb-2">24/7</div>
-              <div className="text-primary-foreground/80">Platform Access</div>
+              <div className="text-primary-foreground/80">{t('index.platformAccess')}</div>
             </div>
             <div>
               <div className="text-4xl font-bold mb-2">100%</div>
-              <div className="text-primary-foreground/80">MSHA Compliant</div>
+              <div className="text-primary-foreground/80">{t('index.mshaCompliant')}</div>
             </div>
           </div>
         </div>
@@ -210,14 +209,13 @@ const Index = () => {
       <section className="py-24">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Get Started?
+            {t('index.readyToStart')}
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of miners who have completed their MSHA training 
-            requirements through our platform.
+            {t('index.joinThousands')}
           </p>
           <Button size="xl" variant="safety" className="text-lg" asChild>
-            <Link to="/auth">Access Training Platform <ArrowRight className="ml-2 h-5 w-5" /></Link>
+            <Link to="/auth">{t('index.accessTrainingPlatform')} <ArrowRight className="ml-2 h-5 w-5" /></Link>
           </Button>
         </div>
       </section>
@@ -225,13 +223,16 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t bg-muted/30 py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center gap-2 mb-4 md:mb-0">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
-              <span className="font-semibold">MineSafe</span>
+              <span className="font-semibold">{t('header.brand')}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <LanguageSwitcher />
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2024 MineSafe. MSHA compliant training platform.
+              {t('footer.copyright')}
             </p>
           </div>
         </div>
