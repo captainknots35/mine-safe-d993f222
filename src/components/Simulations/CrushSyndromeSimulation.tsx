@@ -5,7 +5,14 @@ import { useSimulation } from '@/contexts/SimulationContext';
 import { useEffect } from 'react';
 
 export function CrushSyndromeSimulation() {
-  const { state, goToDecisionPoint, updateCustomState, endScenario, incrementSafetyStrikes } = useSimulation();
+  const { state, startScenario, goToDecisionPoint, updateCustomState, endScenario, incrementSafetyStrikes } = useSimulation();
+
+  // Auto-start the scenario when component mounts
+  useEffect(() => {
+    if (!state.scenarioId || state.scenarioId !== 'S3') {
+      startScenario('S3');
+    }
+  }, [state.scenarioId, startScenario]);
 
   const handleChoice = (choice: 'A' | 'B' | 'C', decisionPoint: string) => {
     if (decisionPoint === 'S3-DP01') {
