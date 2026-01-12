@@ -45,8 +45,12 @@ const Course = () => {
     );
   }
 
-  // Show paywall if not purchased
-  if (!hasPurchased && courseData) {
+  // ⚠️ TEMPORARY: Admins bypass paywall for course development
+  // TODO: Remove this bypass when course content is complete
+  const isAdminBypass = userRole === 'admin' || userRole === 'instructor';
+
+  // Show paywall if not purchased (unless admin/instructor)
+  if (!hasPurchased && !isAdminBypass && courseData) {
     return (
       <CoursePaywall 
         courseId={courseId || ''} 
