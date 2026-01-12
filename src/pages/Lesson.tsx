@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useUserEnrollments, useCourseModules, useModuleLessons } from "@/hooks/useCourses";
+import { useUserEnrollments, useCourseModules, useModuleLessons, useCourse } from "@/hooks/useCourses";
 import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft,
@@ -30,12 +30,17 @@ import { LOTOSimulation } from "@/components/Simulations/LOTOSimulation";
 import { HighwallSimulation } from "@/components/Simulations/HighwallSimulation";
 import { HaulRoadSimulation } from "@/components/Simulations/HaulRoadSimulation";
 import { EmergencySimulationLauncher } from "@/components/Simulations/EmergencySimulationLauncher";
+import { BirdDogSimulation } from "@/components/Simulations/BirdDogSimulation";
+import { RadioDisciplineSimulation } from "@/components/Simulations/RadioDisciplineSimulation";
+import { FireSuppressionSimulation } from "@/components/Simulations/FireSuppressionSimulation";
+import { CrushSyndromeSimulation } from "@/components/Simulations/CrushSyndromeSimulation";
 
 const Lesson = () => {
   const { courseId, moduleId } = useParams<{ courseId: string; moduleId: string }>();
   const navigate = useNavigate();
   const { user, userRole, profile, loading: authLoading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
+  const { data: courseData, isLoading: courseLoading } = useCourse(courseId);
   const { data: modules, isLoading: modulesLoading } = useCourseModules(courseId);
   const { data: lessons, isLoading: lessonsLoading } = useModuleLessons(moduleId);
   const { toast } = useToast();
@@ -49,7 +54,7 @@ const Lesson = () => {
   //   return <Navigate to="/auth" replace />;
   // }
 
-  if (authLoading || enrollmentsLoading || modulesLoading || lessonsLoading) {
+  if (authLoading || enrollmentsLoading || modulesLoading || lessonsLoading || courseLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -59,11 +64,14 @@ const Lesson = () => {
 
   const enrollment = enrollments?.find(e => e.course_id === courseId);
   
-  if (!enrollment) {
+  // ⚠️ TEMPORARY: Admins/instructors can view lessons without enrollment for course development
+  const isAdminBypass = userRole === 'admin' || userRole === 'instructor';
+  
+  if (!enrollment && !isAdminBypass) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const course = enrollment.course;
+  const course = enrollment?.course || courseData;
   const userName = profile ? `${profile.first_name} ${profile.last_name}` : user?.email || 'User';
   const validUserRole = (userRole as 'admin' | 'instructor' | 'miner') || 'miner';
 
@@ -207,6 +215,10 @@ const Lesson = () => {
             {simulationType === 'loto' && <LOTOSimulation />}
             {simulationType === 'highwall' && <HighwallSimulation />}
             {simulationType === 'haulroad' && <HaulRoadSimulation />}
+            {simulationType === 'birddog' && <BirdDogSimulation />}
+            {simulationType === 'radio' && <RadioDisciplineSimulation />}
+            {simulationType === 'firesuppression' && <FireSuppressionSimulation />}
+            {simulationType === 'crush' && <CrushSyndromeSimulation />}
             {!simulationType && <EmergencySimulationLauncher />}
           </div>
         );
