@@ -187,36 +187,42 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          description_es: string | null
           duration_hours: number
           id: string
           is_active: boolean | null
           price_cents: number
           regulation_reference: string | null
           title: string
+          title_es: string | null
           type: Database["public"]["Enums"]["course_type"]
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_hours: number
           id?: string
           is_active?: boolean | null
           price_cents?: number
           regulation_reference?: string | null
           title: string
+          title_es?: string | null
           type: Database["public"]["Enums"]["course_type"]
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_hours?: number
           id?: string
           is_active?: boolean | null
           price_cents?: number
           regulation_reference?: string | null
           title?: string
+          title_es?: string | null
           type?: Database["public"]["Enums"]["course_type"]
           updated_at?: string | null
         }
@@ -355,43 +361,52 @@ export type Database = {
       lessons: {
         Row: {
           content_data: Json | null
+          content_data_es: Json | null
           content_url: string | null
           created_at: string | null
           description: string | null
+          description_es: string | null
           duration_minutes: number | null
           id: string
           is_required: boolean | null
           module_id: string
           order_index: number
           title: string
+          title_es: string | null
           type: Database["public"]["Enums"]["lesson_type"]
           updated_at: string | null
         }
         Insert: {
           content_data?: Json | null
+          content_data_es?: Json | null
           content_url?: string | null
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_minutes?: number | null
           id?: string
           is_required?: boolean | null
           module_id: string
           order_index: number
           title: string
+          title_es?: string | null
           type: Database["public"]["Enums"]["lesson_type"]
           updated_at?: string | null
         }
         Update: {
           content_data?: Json | null
+          content_data_es?: Json | null
           content_url?: string | null
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_minutes?: number | null
           id?: string
           is_required?: boolean | null
           module_id?: string
           order_index?: number
           title?: string
+          title_es?: string | null
           type?: Database["public"]["Enums"]["lesson_type"]
           updated_at?: string | null
         }
@@ -520,33 +535,39 @@ export type Database = {
           course_id: string
           created_at: string | null
           description: string | null
+          description_es: string | null
           duration_minutes: number
           id: string
           order_index: number
           regulation_reference: string | null
           title: string
+          title_es: string | null
           updated_at: string | null
         }
         Insert: {
           course_id: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_minutes: number
           id?: string
           order_index: number
           regulation_reference?: string | null
           title: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Update: {
           course_id?: string
           created_at?: string | null
           description?: string | null
+          description_es?: string | null
           duration_minutes?: number
           id?: string
           order_index?: number
           regulation_reference?: string | null
           title?: string
+          title_es?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -570,6 +591,7 @@ export type Database = {
           last_name: string
           miin: string | null
           phone: string | null
+          preferred_language: string | null
           updated_at: string | null
         }
         Insert: {
@@ -582,6 +604,7 @@ export type Database = {
           last_name: string
           miin?: string | null
           phone?: string | null
+          preferred_language?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -594,6 +617,7 @@ export type Database = {
           last_name?: string
           miin?: string | null
           phone?: string | null
+          preferred_language?: string | null
           updated_at?: string | null
         }
         Relationships: []
