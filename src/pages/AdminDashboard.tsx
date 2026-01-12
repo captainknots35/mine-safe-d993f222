@@ -49,6 +49,7 @@ import { DateRangeSelector, DateRangePreset, DateRange } from "@/components/Admi
 import { FunnelChart } from "@/components/Admin/FunnelChart";
 import { InsightsPanel } from "@/components/Admin/InsightsPanel";
 import { TrafficBreakdownCards } from "@/components/Admin/TrafficBreakdownCards";
+import { CoursePricingManager } from "@/components/Admin/CoursePricingManager";
 
 const CHART_COLORS = ["hsl(var(--primary))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 
@@ -436,6 +437,7 @@ const AdminDashboard = () => {
                   <TabsTrigger value="funnel">Funnel</TabsTrigger>
                   <TabsTrigger value="traffic">Traffic</TabsTrigger>
                   <TabsTrigger value="insights">Insights</TabsTrigger>
+                  <TabsTrigger value="pricing">Pricing</TabsTrigger>
                 </TabsList>
               </div>
 
@@ -538,6 +540,10 @@ const AdminDashboard = () => {
 
               <TabsContent value="insights" className="mt-0">
                 <InsightsPanel insights={trafficInsights || []} isLoading={insightsLoading} />
+              </TabsContent>
+
+              <TabsContent value="pricing" className="mt-0">
+                <CoursePricingManager />
               </TabsContent>
             </Tabs>
           </div>
