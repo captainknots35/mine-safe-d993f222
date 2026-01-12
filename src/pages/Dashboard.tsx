@@ -1,4 +1,5 @@
 import { Navigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Header } from "@/components/Layout/Header";
 import { DashboardStats } from "@/components/Dashboard/DashboardStats";
 import { CourseCard } from "@/components/Courses/CourseCard";
@@ -39,6 +40,7 @@ const upcomingEvents = [
 ];
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user, userRole, profile, loading } = useAuth();
   const { data: enrollments, isLoading: enrollmentsLoading } = useUserEnrollments(user?.id);
   const enrollInCourse = useEnrollInCourse();
@@ -137,15 +139,17 @@ const Dashboard = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Welcome back, {profile?.first_name || 'there'}!</h1>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t('dashboard.welcomeBack', { name: profile?.first_name || 'there' })}
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Stay compliant with your MSHA training requirements
+              {t('dashboard.stayCompliant')}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-success/10 text-success">
               <CheckCircle className="w-3 h-3 mr-1" />
-              Compliance Current
+              {t('dashboard.complianceCurrent')}
             </Badge>
           </div>
         </div>
@@ -158,18 +162,18 @@ const Dashboard = () => {
           {/* My Courses - Takes up 2 columns */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">My Training</h2>
+              <h2 className="text-2xl font-semibold">{t('dashboard.myTraining')}</h2>
               <Button variant="outline" size="sm">
-                View All Courses
+                {t('dashboard.viewAllCourses')}
               </Button>
             </div>
             
             <div className="grid gap-6">
               {enrollments?.length === 0 ? (
                 <Card className="p-8 text-center">
-                  <p className="text-muted-foreground mb-4">No courses enrolled yet.</p>
+                  <p className="text-muted-foreground mb-4">{t('dashboard.noCourses')}</p>
                   <Button variant="outline" asChild>
-                    <Link to="/courses">Browse Available Courses</Link>
+                    <Link to="/courses">{t('dashboard.browseAvailable')}</Link>
                   </Button>
                 </Card>
               ) : (
@@ -206,7 +210,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  Upcoming
+                  {t('dashboard.upcoming')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -236,21 +240,21 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Bell className="h-5 w-5" />
-                  Quick Actions
+                  {t('dashboard.quickActions')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Download Certificates
+                  {t('dashboard.downloadCertificates')}
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <Calendar className="mr-2 h-4 w-4" />
-                  Schedule Live Session
+                  {t('dashboard.scheduleLiveSession')}
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <AlertTriangle className="mr-2 h-4 w-4" />
-                  Report Safety Issue
+                  {t('dashboard.reportSafetyIssue')}
                 </Button>
               </CardContent>
             </Card>

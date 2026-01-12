@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { 
   ShieldCheck, 
   User, 
@@ -31,6 +33,7 @@ interface HeaderProps {
 
 export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProps) => {
   const { signOut } = useAuth();
+  const { t } = useTranslation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -38,12 +41,12 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
   };
 
   const navLinks = [
-    { to: "/dashboard", label: "Dashboard", show: true },
-    { to: "/my-courses", label: "Courses", show: true },
-    { to: "/blog", label: "Blog", show: true },
-    { to: "/admin", label: "Administration", show: userRole === 'admin' },
-    { to: "/instructor", label: "My Classes", show: userRole === 'instructor' },
-    { to: "/certificates", label: "Certificates", show: true },
+    { to: "/dashboard", label: t('nav.dashboard'), show: true },
+    { to: "/my-courses", label: t('nav.courses'), show: true },
+    { to: "/blog", label: t('nav.blog'), show: true },
+    { to: "/admin", label: t('nav.administration'), show: userRole === 'admin' },
+    { to: "/instructor", label: t('nav.myClasses'), show: userRole === 'instructor' },
+    { to: "/certificates", label: t('nav.certificates'), show: true },
   ];
 
   return (
@@ -53,8 +56,8 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
         <Link to="/" className="flex items-center gap-2">
           <ShieldCheck className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-primary">MineSafe</span>
-            <span className="text-xs text-muted-foreground">MSHA Training Platform</span>
+            <span className="font-bold text-lg text-primary">{t('header.brand')}</span>
+            <span className="text-xs text-muted-foreground">{t('header.tagline')}</span>
           </div>
         </Link>
 
@@ -73,6 +76,9 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
 
         {/* User Menu */}
         <div className="flex items-center gap-4">
+          {/* Language Switcher */}
+          <LanguageSwitcher variant="minimal" />
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2">
@@ -83,16 +89,16 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
-                Profile
+                {t('nav.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {t('nav.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="text-destructive" onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                {t('nav.signOut')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -106,7 +112,7 @@ export const Header = ({ userRole = 'miner', userName = 'John Doe' }: HeaderProp
             </SheetTrigger>
             <SheetContent side="right" className="w-64">
               <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
+                <SheetTitle>{t('nav.menu')}</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-4 mt-6">
                 {navLinks.filter(link => link.show).map(link => (
