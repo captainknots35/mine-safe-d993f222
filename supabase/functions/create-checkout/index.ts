@@ -46,10 +46,10 @@ serve(async (req) => {
       });
     }
 
-    // Get course details
+    // Get course details including price
     const { data: course, error: courseError } = await supabaseAdmin
       .from("courses")
-      .select("id, title, description")
+      .select("id, title, description, price_cents")
       .eq("id", courseId)
       .single();
 
@@ -60,6 +60,9 @@ serve(async (req) => {
         status: 404,
       });
     }
+
+    const priceCents = course.price_cents || 10800; // Fallback to $108 if not set
+    console.log("Course price:", priceCents, "cents");
 
     // Check if already purchased
     const { data: existingPurchase } = await supabaseAdmin
@@ -111,7 +114,7 @@ serve(async (req) => {
 
     console.log("Creating Stripe checkout session for customer:", customerId);
 
-    // Create checkout session - $108 = 10800 cents
+    // Create checkout session with dynamic pricing
     const origin = req.headers.get("origin") || "https://yqpqfjmyghoehxzuevrz.lovableproject.com";
     
     const sessionRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -124,8 +127,8 @@ serve(async (req) => {
         customer: customerId,
         "line_items[0][price_data][currency]": "usd",
         "line_items[0][price_data][product_data][name]": course.title,
-        "line_items[0][price_data][product_data][description]": course.description || "MSHA Part 46 New Miner Training",
-        "line_items[0][price_data][unit_amount]": "10800", // $108.00 in cents
+        "line_items[0][price_data][product_data][description]": course.description || "MSHA Mining Safety Training",
+        "line_items[0][price_data][unit_amount]": priceCents.toString(),
         "line_items[0][quantity]": "1",
         mode: "payment",
         success_url: successUrl || `${origin}/dashboard?payment=success`,
@@ -154,7 +157,7 @@ serve(async (req) => {
         user_id: user.id,
         course_id: courseId,
         stripe_session_id: session.id,
-        amount_cents: 10800, // $108.00 in cents
+        amount_cents: priceCents,
         currency: "usd",
         status: "pending",
       }, { onConflict: "user_id,course_id" });

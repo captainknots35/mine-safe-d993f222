@@ -10,16 +10,21 @@ import { useToast } from '@/hooks/use-toast';
 interface CoursePaywallProps {
   courseId: string;
   courseTitle: string;
+  courseDescription?: string;
+  priceCents: number;
   children: React.ReactNode;
 }
 
-export const CoursePaywall = ({ courseId, courseTitle, children }: CoursePaywallProps) => {
+export const CoursePaywall = ({ courseId, courseTitle, courseDescription, priceCents, children }: CoursePaywallProps) => {
   const { user, loading: authLoading } = useAuth();
   const { hasPurchased, isLoading: purchaseLoading } = useHasPurchasedCourse(courseId);
   const createCheckout = useCreateCheckout();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Format price from cents to dollars
+  const priceFormatted = (priceCents / 100).toFixed(0);
 
   const handlePurchase = async () => {
     if (!user) {
@@ -81,13 +86,13 @@ export const CoursePaywall = ({ courseId, courseTitle, children }: CoursePaywall
               {courseTitle}
             </CardTitle>
             <CardDescription className="text-base mt-2">
-              MSHA Part 46 compliant training for new miners
+              {courseDescription || 'MSHA compliant training course'}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6">
             <div className="text-center">
-              <div className="text-4xl font-bold text-primary">$108</div>
+              <div className="text-4xl font-bold text-primary">${priceFormatted}</div>
               <p className="text-muted-foreground">One-time payment</p>
             </div>
 
@@ -139,7 +144,7 @@ export const CoursePaywall = ({ courseId, courseTitle, children }: CoursePaywall
                 </>
               ) : (
                 <>
-                  {user ? 'Purchase Course - $108' : 'Sign In to Purchase'}
+                  {user ? `Purchase Course - $${priceFormatted}` : 'Sign In to Purchase'}
                 </>
               )}
             </Button>

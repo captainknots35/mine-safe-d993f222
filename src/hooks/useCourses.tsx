@@ -9,6 +9,7 @@ export interface Course {
   duration_hours: number;
   regulation_reference: string;
   is_active: boolean;
+  price_cents: number;
   created_at: string;
   updated_at: string;
 }
