@@ -190,6 +190,7 @@ export type Database = {
           duration_hours: number
           id: string
           is_active: boolean | null
+          price_cents: number
           regulation_reference: string | null
           title: string
           type: Database["public"]["Enums"]["course_type"]
@@ -201,6 +202,7 @@ export type Database = {
           duration_hours: number
           id?: string
           is_active?: boolean | null
+          price_cents?: number
           regulation_reference?: string | null
           title: string
           type: Database["public"]["Enums"]["course_type"]
@@ -212,6 +214,7 @@ export type Database = {
           duration_hours?: number
           id?: string
           is_active?: boolean | null
+          price_cents?: number
           regulation_reference?: string | null
           title?: string
           type?: Database["public"]["Enums"]["course_type"]

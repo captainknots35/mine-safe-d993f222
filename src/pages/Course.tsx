@@ -51,6 +51,8 @@ const Course = () => {
       <CoursePaywall 
         courseId={courseId || ''} 
         courseTitle={courseData.title}
+        courseDescription={courseData.description}
+        priceCents={courseData.price_cents || 10800}
       >
         <div />
       </CoursePaywall>
